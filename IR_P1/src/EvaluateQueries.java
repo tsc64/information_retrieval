@@ -30,6 +30,8 @@ public class EvaluateQueries {
 		System.out.println(evaluate(indexDir, docsDir, queryFile,
 				answerFile, numResults, stopwords));
 		
+		System.out.println("done.");
+		
 	}
 
 	private static Map<Integer, String> loadQueries(String filename) {
