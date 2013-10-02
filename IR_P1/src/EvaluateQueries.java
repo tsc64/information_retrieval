@@ -26,9 +26,9 @@ public class EvaluateQueries {
 		String answerFile = "data/cacm_processed.rel";   // relevance judgements file
 
 		int numResults = 5;
-        ArrayList<String> stoplist = new ArrayList<String>();
+/*        ArrayList<String> stoplist = new ArrayList<String>();
         try{
-    	   BufferedReader br = new BufferedReader(new FileReader("data/stopwords/stopwords_general.txt"));
+    	   BufferedReader br = new BufferedReader(new FileReader("data/stopwords/stopwords_union3.txt"));
        
     	   String newline;
     	   while ((newline = br.readLine()) != null){
@@ -41,7 +41,8 @@ public class EvaluateQueries {
     	   System.out.println("Check your try block");
        }
        
-	    CharArraySet stopwords = new CharArraySet(Version.LUCENE_44, stoplist, false);
+	    CharArraySet stopwords = new CharArraySet(Version.LUCENE_44, stoplist, false); */
+		CharArraySet stopwords = new CharArraySet(Version.LUCENE_44, 0, false);
 		System.out.println(evaluate(indexDir, docsDir, queryFile,
 				answerFile, numResults, stopwords));
 		
