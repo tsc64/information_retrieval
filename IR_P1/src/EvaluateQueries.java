@@ -17,6 +17,8 @@ import org.apache.lucene.util.Version;
 import org.tartarus.snowball.ext.PorterStemmer;
 
 public class EvaluateQueries {
+	public final static boolean USE_STEMMING = true;
+	
 	public static void main(String[] args) {
 		String docsDir = "data/txt/"; // directory containing documents
 		String indexDir = "data/index/"; // the directory where index is written into
