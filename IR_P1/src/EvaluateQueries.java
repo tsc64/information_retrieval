@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,8 +28,23 @@ public class EvaluateQueries {
 		String answerFile = "data/cacm_processed.rel";   // relevance judgements file
 
 		int numResults = 5;
-
-		CharArraySet stopwords = new CharArraySet(Version.LUCENE_44,0,false);
+/*        ArrayList<String> stoplist = new ArrayList<String>();
+        try{
+    	   BufferedReader br = new BufferedReader(new FileReader("data/stopwords/stopwords_union3.txt"));
+       
+    	   String newline;
+    	   while ((newline = br.readLine()) != null){
+    		   stoplist.add(newline.trim());
+    		   System.out.println(newline.trim());
+        	
+        }
+        br.close();
+       }catch(Exception e){
+    	   System.out.println("Check your try block");
+       }
+       
+	    CharArraySet stopwords = new CharArraySet(Version.LUCENE_44, stoplist, false); */
+		CharArraySet stopwords = new CharArraySet(Version.LUCENE_44, 0, false);
 		System.out.println(evaluate(indexDir, docsDir, queryFile,
 				answerFile, numResults, stopwords));
 		
