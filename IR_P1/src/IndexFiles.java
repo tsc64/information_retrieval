@@ -1,17 +1,12 @@
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
-import java.util.Scanner;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.miscellaneous.StemmerOverrideFilter;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -92,7 +87,7 @@ public class IndexFiles {
 				}
 			} else {
 				FileInputStream fis = null;
-				
+
 				try {
 					fis = new FileInputStream(file);
 				} catch (FileNotFoundException e) {
@@ -107,10 +102,6 @@ public class IndexFiles {
 					// field that is indexed (i.e. searchable), but don't tokenize 
 					// the field into separate words and don't index term frequency
 					// or positional information:
-//					if (EvaluateQueries.USE_STEMMING) {
-//						file = createStemmedFile(file);
-//						System.out.println(file.getAbsolutePath());
-//					}
 					Field pathField = new StringField("path", file.getName(), Field.Store.YES);
 					doc.add(pathField);
 
@@ -135,60 +126,4 @@ public class IndexFiles {
 			}
 		}
 	}
-	
-	/*
-	private static File createStemmedFile(File inFile) {
-		File parent = new File(inFile.getParentFile().getAbsoluteFile() + "_stemmed");
-		parent.mkdir();
-		File outFile = new File(parent, inFile.getName());
-		if (!outFile.exists()) {
-			System.out.println(outFile.getName());
-			try {
-				//			outFile.createNewFile();
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			//		outFile.deleteOnExit();
-			try {
-				BufferedWriter fbw = new BufferedWriter(new FileWriter(outFile, true));
-				Scanner scanner = new Scanner(new FileReader(inFile));
-
-				String txt = "";
-				while ( scanner.hasNextLine() ){
-					String line = scanner.nextLine();
-					txt += line + " ";
-					String stemmedLine = EvaluateQueries.createStems(line);
-					//				System.out.println(stemmedLine);
-					fbw.write(stemmedLine);
-					fbw.newLine();
-				}
-
-//				fbw.write(EvaluateQueries.createStems(txt));
-
-				fbw.close();
-				scanner.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			try {
-				//			System.out.println(outFile.getAbsolutePath());
-				Scanner scanner = new Scanner(new FileReader(outFile));
-				while ( scanner.hasNextLine() ){
-					String line = scanner.nextLine();
-					//				System.out.println(line);
-				}
-				scanner.close();
-
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-
-			return outFile;
-		} else {
-			
-			return outFile;
-		}
-	}*/
 }

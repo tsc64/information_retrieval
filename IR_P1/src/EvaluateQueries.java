@@ -9,18 +9,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.core.StopAnalyzer;
-import org.apache.lucene.analysis.en.PorterStemFilter;
-import org.apache.lucene.analysis.hunspell.HunspellStemmer.Stem;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
-import org.tartarus.snowball.ext.PorterStemmer;
 
 public class EvaluateQueries {
 	public final static boolean USE_STEMMING = true;
 	public final static boolean USE_STOP_WORDS = true;
-	
+
 	public static void main(String[] args) {
 		String docsDir = "data/txt/"; // directory containing documents
 		String indexDir = "data/index/"; // the directory where index is written into
@@ -38,8 +33,6 @@ public class EvaluateQueries {
 				String newline;
 				while ((newline = br.readLine()) != null){
 					stoplist.add(newline.trim());
-//					System.out.println(newline.trim());
-
 				}
 				br.close();
 			}catch(Exception e){
@@ -52,9 +45,9 @@ public class EvaluateQueries {
 		}
 		System.out.println(evaluate(indexDir, docsDir, queryFile,
 				answerFile, numResults, stopwords));
-		
+
 		System.out.println("done.");
-		
+
 	}
 
 	private static Map<Integer, String> loadQueries(String filename) {
@@ -71,14 +64,8 @@ public class EvaluateQueries {
 		try {
 			while ((line = in.readLine()) != null) {
 				int pos = line.indexOf(',');
-				//Stemming
-//				if (USE_STEMMING) {
-//					queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
-//						createStems(line.substring(pos + 1)));
-//				} else {
-					queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
+				queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
 						line.substring(pos + 1));
-//				}
 			}
 		} catch(IOException e) {
 			System.out.println(" caught a " + e.getClass() + "\n with message: " + e.getMessage());
@@ -146,7 +133,6 @@ public class EvaluateQueries {
 		double sum = 0;
 		for (Integer i : queries.keySet()) {
 			String query = queries.get(i);
-//			System.out.println(query);
 			List<String> results = SearchFiles.searchQuery(indexDir, 
 					query, numResults, stopwords);
 			sum += precision(queryAnswers.get(i), results);
@@ -154,18 +140,5 @@ public class EvaluateQueries {
 
 		return sum / queries.size();
 	}
-	
-	/*
-	public static String createStems(String str) {
-		String[] words = str.split(" ");
-		PorterStemmer ps = new PorterStemmer();
-		String output = "";
-		for (String word : words) {
-			ps.setCurrent(word);
-			ps.stem();
-			output += ps.getCurrent() + " ";
-		}
-		return output.trim();
-	}
-	*/
+
 }
