@@ -107,10 +107,10 @@ public class IndexFiles {
 					// field that is indexed (i.e. searchable), but don't tokenize 
 					// the field into separate words and don't index term frequency
 					// or positional information:
-					if (EvaluateQueries.USE_STEMMING) {
-						file = createStemmedFile(file);
-						System.out.println(file.getAbsolutePath());
-					}
+//					if (EvaluateQueries.USE_STEMMING) {
+//						file = createStemmedFile(file);
+//						System.out.println(file.getAbsolutePath());
+//					}
 					Field pathField = new StringField("path", file.getName(), Field.Store.YES);
 					doc.add(pathField);
 
@@ -136,40 +136,59 @@ public class IndexFiles {
 		}
 	}
 	
+	/*
 	private static File createStemmedFile(File inFile) {
-		File outFile = new File(inFile.getAbsoluteFile() + ".stemmed");
-		outFile.deleteOnExit();
-		try {
-			BufferedWriter fbw = new BufferedWriter(new FileWriter(outFile, true));
-			Scanner scanner = new Scanner(new FileReader(inFile));
-			
-			while ( scanner.hasNextLine() ){
-				String line = scanner.nextLine();
-				String stemmedLine = EvaluateQueries.createStems(line);
-//				System.out.println(stemmedLine);
-				fbw.write(stemmedLine);
-				fbw.newLine();
+		File parent = new File(inFile.getParentFile().getAbsoluteFile() + "_stemmed");
+		parent.mkdir();
+		File outFile = new File(parent, inFile.getName());
+		if (!outFile.exists()) {
+			System.out.println(outFile.getName());
+			try {
+				//			outFile.createNewFile();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
-			
-			fbw.close();
-			scanner.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		try {
-//			System.out.println(outFile.getAbsolutePath());
-			Scanner scanner = new Scanner(new FileReader(outFile));
-			while ( scanner.hasNextLine() ){
-				String line = scanner.nextLine();
-//				System.out.println(line);
+			//		outFile.deleteOnExit();
+			try {
+				BufferedWriter fbw = new BufferedWriter(new FileWriter(outFile, true));
+				Scanner scanner = new Scanner(new FileReader(inFile));
+
+				String txt = "";
+				while ( scanner.hasNextLine() ){
+					String line = scanner.nextLine();
+					txt += line + " ";
+					String stemmedLine = EvaluateQueries.createStems(line);
+					//				System.out.println(stemmedLine);
+					fbw.write(stemmedLine);
+					fbw.newLine();
+				}
+
+//				fbw.write(EvaluateQueries.createStems(txt));
+
+				fbw.close();
+				scanner.close();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			scanner.close();
+
+			try {
+				//			System.out.println(outFile.getAbsolutePath());
+				Scanner scanner = new Scanner(new FileReader(outFile));
+				while ( scanner.hasNextLine() ){
+					String line = scanner.nextLine();
+					//				System.out.println(line);
+				}
+				scanner.close();
+
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+
+			return outFile;
+		} else {
 			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			return outFile;
 		}
-		
-		return outFile;
-	}
+	}*/
 }

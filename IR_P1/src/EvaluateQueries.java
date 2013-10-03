@@ -19,6 +19,7 @@ import org.tartarus.snowball.ext.PorterStemmer;
 
 public class EvaluateQueries {
 	public final static boolean USE_STEMMING = true;
+	public final static boolean USE_STOP_WORDS = true;
 	
 	public static void main(String[] args) {
 		String docsDir = "data/txt/"; // directory containing documents
@@ -28,23 +29,27 @@ public class EvaluateQueries {
 		String answerFile = "data/cacm_processed.rel";   // relevance judgements file
 
 		int numResults = 5;
-/*        ArrayList<String> stoplist = new ArrayList<String>();
-        try{
-    	   BufferedReader br = new BufferedReader(new FileReader("data/stopwords/stopwords_union3.txt"));
-       
-    	   String newline;
-    	   while ((newline = br.readLine()) != null){
-    		   stoplist.add(newline.trim());
-    		   System.out.println(newline.trim());
-        	
-        }
-        br.close();
-       }catch(Exception e){
-    	   System.out.println("Check your try block");
-       }
-       
-	    CharArraySet stopwords = new CharArraySet(Version.LUCENE_44, stoplist, false); */
-		CharArraySet stopwords = new CharArraySet(Version.LUCENE_44, 0, false);
+		CharArraySet stopwords;
+		if (USE_STOP_WORDS) {
+			ArrayList<String> stoplist = new ArrayList<String>();
+			try{
+				BufferedReader br = new BufferedReader(new FileReader("data/stopwords/stopwords_union3.txt"));
+
+				String newline;
+				while ((newline = br.readLine()) != null){
+					stoplist.add(newline.trim());
+					System.out.println(newline.trim());
+
+				}
+				br.close();
+			}catch(Exception e){
+				System.out.println("Check your try block");
+			}
+
+			stopwords = new CharArraySet(Version.LUCENE_44, stoplist, false); 
+		} else {
+			stopwords = new CharArraySet(Version.LUCENE_44, 0, false);
+		}
 		System.out.println(evaluate(indexDir, docsDir, queryFile,
 				answerFile, numResults, stopwords));
 		
@@ -67,13 +72,13 @@ public class EvaluateQueries {
 			while ((line = in.readLine()) != null) {
 				int pos = line.indexOf(',');
 				//Stemming
-				if (USE_STEMMING) {
-					queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
-						createStems(line.substring(pos + 1)));
-				} else {
+//				if (USE_STEMMING) {
+//					queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
+//						createStems(line.substring(pos + 1)));
+//				} else {
 					queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
 						line.substring(pos + 1));
-				}
+//				}
 			}
 		} catch(IOException e) {
 			System.out.println(" caught a " + e.getClass() + "\n with message: " + e.getMessage());
@@ -140,14 +145,17 @@ public class EvaluateQueries {
 		// Search and evaluate
 		double sum = 0;
 		for (Integer i : queries.keySet()) {
-			List<String> results = SearchFiles.searchQuery(indexDir, queries
-					.get(i), numResults, stopwords);
+			String query = queries.get(i);
+//			System.out.println(query);
+			List<String> results = SearchFiles.searchQuery(indexDir, 
+					query, numResults, stopwords);
 			sum += precision(queryAnswers.get(i), results);
 		}
 
 		return sum / queries.size();
 	}
 	
+	/*
 	public static String createStems(String str) {
 		String[] words = str.split(" ");
 		PorterStemmer ps = new PorterStemmer();
@@ -159,4 +167,5 @@ public class EvaluateQueries {
 		}
 		return output.trim();
 	}
+	*/
 }

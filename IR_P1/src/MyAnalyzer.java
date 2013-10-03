@@ -4,6 +4,7 @@ import java.io.Reader;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.StopFilter;
+import org.apache.lucene.analysis.en.KStemFilter;
 import org.apache.lucene.analysis.en.PorterStemFilter;
 import org.apache.lucene.analysis.standard.StandardFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizer;
@@ -55,6 +56,9 @@ public class MyAnalyzer extends StopwordAnalyzerBase {
 		// Add additional filters here 
 		tok = new StopFilter(matchVersion, tok, stopwords);
 
+		if (EvaluateQueries.USE_STEMMING) {
+			tok = new KStemFilter(tok);
+		}
 
 		return new TokenStreamComponents(src, tok) {
 			@Override
@@ -63,5 +67,10 @@ public class MyAnalyzer extends StopwordAnalyzerBase {
 				super.setReader(reader);
 			}
 		};
+	}
+
+	private TokenStream PorterStemFilter(TokenStream tok) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
