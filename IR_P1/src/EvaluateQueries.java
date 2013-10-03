@@ -33,12 +33,12 @@ public class EvaluateQueries {
 		if (USE_STOP_WORDS) {
 			ArrayList<String> stoplist = new ArrayList<String>();
 			try{
-				BufferedReader br = new BufferedReader(new FileReader("data/stopwords/stopwords_union3.txt"));
+				BufferedReader br = new BufferedReader(new FileReader("data/stopwords_union.txt"));
 
 				String newline;
 				while ((newline = br.readLine()) != null){
 					stoplist.add(newline.trim());
-					System.out.println(newline.trim());
+//					System.out.println(newline.trim());
 
 				}
 				br.close();
