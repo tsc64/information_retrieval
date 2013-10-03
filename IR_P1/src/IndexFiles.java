@@ -1,12 +1,17 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
+import java.util.Scanner;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.miscellaneous.StemmerOverrideFilter;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -102,6 +107,10 @@ public class IndexFiles {
 					// field that is indexed (i.e. searchable), but don't tokenize 
 					// the field into separate words and don't index term frequency
 					// or positional information:
+					if (EvaluateQueries.USE_STEMMING) {
+						file = createStemmedFile(file);
+						System.out.println(file.getAbsolutePath());
+					}
 					Field pathField = new StringField("path", file.getName(), Field.Store.YES);
 					doc.add(pathField);
 
@@ -125,5 +134,42 @@ public class IndexFiles {
 				}
 			}
 		}
+	}
+	
+	private static File createStemmedFile(File inFile) {
+		File outFile = new File(inFile.getAbsoluteFile() + ".stemmed");
+		outFile.deleteOnExit();
+		try {
+			BufferedWriter fbw = new BufferedWriter(new FileWriter(outFile, true));
+			Scanner scanner = new Scanner(new FileReader(inFile));
+			
+			while ( scanner.hasNextLine() ){
+				String line = scanner.nextLine();
+				String stemmedLine = EvaluateQueries.createStems(line);
+//				System.out.println(stemmedLine);
+				fbw.write(stemmedLine);
+				fbw.newLine();
+			}
+			
+			fbw.close();
+			scanner.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		try {
+//			System.out.println(outFile.getAbsolutePath());
+			Scanner scanner = new Scanner(new FileReader(outFile));
+			while ( scanner.hasNextLine() ){
+				String line = scanner.nextLine();
+//				System.out.println(line);
+			}
+			scanner.close();
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		return outFile;
 	}
 }

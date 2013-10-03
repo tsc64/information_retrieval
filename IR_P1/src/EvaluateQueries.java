@@ -66,8 +66,14 @@ public class EvaluateQueries {
 		try {
 			while ((line = in.readLine()) != null) {
 				int pos = line.indexOf(',');
-				queryIdMap.put(Integer.parseInt(line.substring(0, pos)), line
-						.substring(pos + 1));
+				//Stemming
+				if (USE_STEMMING) {
+					queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
+						createStems(line.substring(pos + 1)));
+				} else {
+					queryIdMap.put(Integer.parseInt(line.substring(0, pos)), 
+						line.substring(pos + 1));
+				}
 			}
 		} catch(IOException e) {
 			System.out.println(" caught a " + e.getClass() + "\n with message: " + e.getMessage());
@@ -142,7 +148,7 @@ public class EvaluateQueries {
 		return sum / queries.size();
 	}
 	
-	private static String createStems(String str) {
+	public static String createStems(String str) {
 		String[] words = str.split(" ");
 		PorterStemmer ps = new PorterStemmer();
 		String output = "";
