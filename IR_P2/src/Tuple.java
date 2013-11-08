@@ -13,4 +13,20 @@ public class Tuple implements Comparable<Tuple> {
 		else if (value == other.value) return 0;
 		else return 1;
 	}
+	
+	//doesn't care if they are equal
+	public Tuple min (Tuple other) {
+		if ((compareTo(other)) < 0) return this;
+		else return other;
+	}
+	
+	//doesn't care if they are equal
+	public Tuple max (Tuple other) {
+		if ((compareTo(other)) > 0) return this;
+		else return other;
+	}
+	
+	public boolean equals (Tuple other) {
+		if (value == other.value) return true; else return false;
+	}
 }
