@@ -136,8 +136,9 @@ public class SearchEngine {
 	 * Returns the inverted index
 	 */
 	private Object invertedIndexFrequencies() {
-
-		return null;
+		HashMap<String, Integer> invIndex = new HashMap<String, Integer>();
+		invIndex.put("hi tre",0);
+		return invIndex;
 	}
 
 	/**
