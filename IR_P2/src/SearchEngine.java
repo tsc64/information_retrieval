@@ -179,7 +179,7 @@ public class SearchEngine {
 	 * Prints the 5 most frequent and the 5 least frequent words
 	 * Returns the inverted index
 	 */
-	private Object invertedIndexFrequencies() {
+	private HashMap<String, HashMap<String, Double>> invertedIndexFrequencies() {
 		HashMap<String, HashMap<String, Double>> invIndex = new HashMap<String, HashMap<String, Double>>();
 		HashMap<String, Double> docFreqI = new HashMap<String, Double>();
 		docFreqI.put("why hello there tre", 0.0);
@@ -326,7 +326,7 @@ public class SearchEngine {
 		
 		System.out.println();
 		System.out.println("Part B:");
-		Object invertedIndex = engine.invertedIndexFrequencies();
+		HashMap<String, HashMap<String, Double>> invertedIndex = engine.invertedIndexFrequencies();
 		
 		System.out.println();
 		System.out.println("Part C:");
