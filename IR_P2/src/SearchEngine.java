@@ -50,7 +50,6 @@ public class SearchEngine {
 			        while (stream.incrementToken())
 			        {
 			        	String token = cattr.toString();
-//			            System.out.println(token);
 			            if (occurences.containsKey(token)) {
 			            	occurences.put(token, occurences.get(token) + 1);
 			            } else {
