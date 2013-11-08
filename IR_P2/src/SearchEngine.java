@@ -1,15 +1,24 @@
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.util.Version;
+
 
 public class SearchEngine {
-	String docsDir;
-	String indexDir;
-	String queryFile;
-	String answerFile;
+	File docsDir;
+	File indexDir;
+	File queryFile;
+	File answerFile;
 	
 	public SearchEngine(String docsDir, String indexDir, String queryFile, String answerFile) {
-		this.docsDir = docsDir;
-		this.indexDir = indexDir;
-		this.queryFile = queryFile;
-		this.answerFile = answerFile;
+		this.docsDir = new File(docsDir);
+		this.indexDir = new File(indexDir);
+		this.queryFile = new File(queryFile);
+		this.answerFile = new File(answerFile);
 	}
 	
 	/**
@@ -18,7 +27,21 @@ public class SearchEngine {
 	 * Prints the 5 most frequent and the 5 least frequent words
 	 */
 	private void verifyZipf() {
+		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
+		TokenStream stream;
 		
+		try {
+			stream = sa.tokenStream(null, new StringReader("how are you today")); //content
+			CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
+			stream.reset();
+	        while (stream.incrementToken())
+	        {
+	            System.out.println(cattr.toString());
+	        }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		 
 	}
 	
 	/**
