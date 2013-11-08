@@ -1,9 +1,9 @@
 
 public class Tuple implements Comparable<Tuple> {
 	public Object object;
-	public int value;
+	public double value;
 	
-	public Tuple(Object o, int i) {
+	public Tuple(Object o, double i) {
 		object = o;
 		value = i;
 	}
