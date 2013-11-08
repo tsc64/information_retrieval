@@ -180,8 +180,10 @@ public class SearchEngine {
 	 * Returns the inverted index
 	 */
 	private Object invertedIndexFrequencies() {
-		HashMap<String, Integer> invIndex = new HashMap<String, Integer>();
-		invIndex.put("hi tre",0);
+		HashMap<String, HashMap<String, Double>> invIndex = new HashMap<String, HashMap<String, Double>>();
+		HashMap<String, Double> docFreqI = new HashMap<String, Double>();
+		docFreqI.put("why hello there tre", 0.0);
+		invIndex.put("the_tre_word",docFreqI);
 		return invIndex;
 	}
 
