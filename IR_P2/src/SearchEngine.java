@@ -1,6 +1,11 @@
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.PriorityQueue;
+import java.util.Scanner;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -26,22 +31,103 @@ public class SearchEngine {
 	 * Creates a list of (number of words, frequency) pairs
 	 * Prints the 5 most frequent and the 5 least frequent words
 	 */
-	private void verifyZipf() {
+	private void verifyZipf(int numResults) {
+		HashMap<String, Integer> occurences = new HashMap<String, Integer>();
 		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
 		TokenStream stream;
 		
 		try {
-			stream = sa.tokenStream(null, new StringReader("how are you today")); //content
-			CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
-			stream.reset();
-	        while (stream.incrementToken())
-	        {
-	            System.out.println(cattr.toString());
-	        }
+			File[] children = docsDir.listFiles();
+			Scanner scanner;
+			for (File child : children) {
+				scanner = new Scanner(new FileReader(child));
+				while ( scanner.hasNextLine() ){
+					String line = scanner.nextLine();
+
+					stream = sa.tokenStream(null, new StringReader(line)); //content
+					CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
+					stream.reset();
+			        while (stream.incrementToken())
+			        {
+			        	String token = cattr.toString();
+//			            System.out.println(token);
+			            if (occurences.containsKey(token)) {
+			            	occurences.put(token, occurences.get(token) + 1);
+			            } else {
+			            	occurences.put(token, 1);
+			            }
+			        }
+				}
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		 
+		
+		PriorityQueue<Tuple> highQ = new PriorityQueue<Tuple>();
+		PriorityQueue<Tuple> lowQ = new PriorityQueue<Tuple>();
+		
+		for (String token : occurences.keySet()) {
+			int value = occurences.get(token);
+			//maintains a a queue with the numResults greatest values
+			if (highQ.size() >= numResults) {
+				if (highQ.peek().value < value) {
+					highQ.poll();
+					highQ.add(new Tuple(token, value));
+				}
+			} else {
+				highQ.add(new Tuple(token, value));
+			}
+			
+			//maintains a a queue with the numResults lowest values
+			if (lowQ.size() >= numResults) {
+				if (lowQ.peek().value < -value) {
+					lowQ.poll();
+					lowQ.add(new Tuple(token, -value));
+				}
+			} else {
+				lowQ.add(new Tuple(token, -value));
+			}
+		}
+		
+		int numWords = occurences.size();
+		Tuple[] maxArr = new Tuple[highQ.size()];
+		for (int i = 0; i < numResults; i++) {
+			maxArr[i] = highQ.poll();
+		}
+		Arrays.sort(maxArr);
+		String max = "";
+		for (int i = 0; i < maxArr.length; i++) {
+			Tuple t = maxArr[i];
+			int r = (maxArr.length - i);
+			double prob = ((double) t.value / (double) numWords);
+			max = "Word: " + t.object 
+					+ ", Freq: " + t.value 
+					+ ", r: " + r 
+					+ ", prob: " + prob
+					+ ", c: " + (r*prob)
+					+ "\n" + max;
+		}
+		System.out.println(max);
+		
+		Tuple[] minArr = new Tuple[lowQ.size()];
+		for (int i = 0; i < numResults; i++) {
+			minArr[i] = lowQ.poll();
+		}
+		Arrays.sort(minArr);
+		String min = "";
+		for (int i = 0; i < minArr.length; i++) {
+			Tuple t = minArr[i];
+			int r = (minArr.length - i);
+			double prob = ((double) -t.value / (double) numWords);
+			min = "Word: " + t.object 
+					+ ", Freq: " + -t.value 
+					+ ", r: " + r 
+					+ ", prob: " + prob
+					+ ", c: " + (r*prob)
+					+ "\n" + min;
+		}
+		System.out.println(min);
+		System.out.println("Number of unique words: " + numWords);
 	}
 	
 	/**
@@ -104,7 +190,7 @@ public class SearchEngine {
 		SearchEngine engine = new SearchEngine("data/txt/", "data/index/", "data/cacm_processed.query", "data/cacm_processed.rel");
 		
 		System.out.println("Part A:");
-		engine.verifyZipf();
+		engine.verifyZipf(5);
 		
 		System.out.println();
 		System.out.println("Part B:");
