@@ -505,7 +505,9 @@ public class SearchEngine {
 		System.out.println("tf-idf top docs:");
 		
 		for (int i = numResults - 1; i >= 0; i--) {
-			System.out.println("#" + (numResults - i) + ": " + topArr[i].object);
+			String docName = (String) topArr[i].object;
+			docName = docName.substring(0, docName.lastIndexOf("."));
+			System.out.println("#" + (numResults - i) + ": " + docName);
 		}
 	}
 
