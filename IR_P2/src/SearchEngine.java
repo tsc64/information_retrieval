@@ -497,9 +497,15 @@ public class SearchEngine {
 			}
 		}
 		
+		Tuple[] topArr = new Tuple[numResults];
+		for (int i = 0; i < numResults; i++) {
+			topArr[i] = topDocs.poll();
+		}
+		Arrays.sort(topArr);
 		System.out.println("tf-idf top docs:");
-		while (!topDocs.isEmpty()) {
-			System.out.println(topDocs.poll().object);
+		
+		for (int i = numResults - 1; i >= 0; i--) {
+			System.out.println("#" + (numResults - i) + ": " + topArr[i].object);
 		}
 	}
 
