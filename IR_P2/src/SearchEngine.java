@@ -180,7 +180,7 @@ public class SearchEngine {
 	
 	private ArrayList<Tuple> min_five (ArrayList<Tuple> current, Tuple next){
 		//newMin holds the largest Tuple of the 6 values
-		Tuple newMin = new Tuple(null,Integer.MIN_VALUE);
+		Tuple newMin = current.get(0);
 		for (Tuple t : current){
 			newMin = newMin.max(t);
 		}
@@ -191,13 +191,15 @@ public class SearchEngine {
 				newAL.add(t);
 			}
 		}
-		if (!(newMin.equals(next))) newAL.add(next);
+		if (!(newMin.equals(next))) {
+			newAL.add(next);
+		}
 		return newAL;
 	}
 	
 	private ArrayList<Tuple> max_five (ArrayList<Tuple> current, Tuple next){
 		//newMax holds the smallest Tuple of the 6 values
-		Tuple newMax = new Tuple(null,Integer.MAX_VALUE);
+		Tuple newMax = current.get(0);
 		for (Tuple t : current){
 			newMax = newMax.min(t);
 		}
@@ -262,27 +264,55 @@ public class SearchEngine {
 		//here is where you determine the big/small 5
 		ArrayList<Tuple> minBase = new ArrayList<Tuple>();
 		ArrayList<Tuple> maxBase = new ArrayList<Tuple>();
-		//set up base values to compare to
 		for (int i = 1; i < 6; i ++){
 			minBase.add(new Tuple(null,Integer.MAX_VALUE - i));
 			maxBase.add(new Tuple(null,Integer.MIN_VALUE + i));
 		}
-		//System.out.println(invIndex.size());
 		//find the five min and max values in the index
 		for (String x : invIndex.keySet()){
 			minBase = min_five(minBase, new Tuple(x,invIndex.get(x).size()));
 			maxBase = max_five(maxBase, new Tuple(x,invIndex.get(x).size()));
 		}
 		//printing the 10 values
+		System.out.println("Five least most common words:");
+		System.out.println("Word: Occurrences");
 		for (Tuple x : minBase){
-			System.out.println(x.object + ": " + x.value);
+			System.out.println(x.object + ": " + (int) x.value);
 		}
+		System.out.println("Five most common words:");
+		System.out.println("Word: Occurrences");
 		for (Tuple x : maxBase){
-			System.out.println(x.object + ": " + x.value);
+			System.out.println(x.object + ": " + (int) x.value);
 		}
 		//here is where you change counts to frequencies
 		
-		
+	    HashMap<String, Integer> wordCount = new HashMap<String, Integer>();
+	    for (String s : invIndex.keySet()){
+	    	for (String y : invIndex.get(s).keySet()){
+	    		if (wordCount.containsKey(y)) {
+		    		wordCount.put(y, wordCount.get(y) + invIndex.get(s).get(y));
+	    		}
+	    		else {
+	    			wordCount.put(y, invIndex.get(s).get(y));
+	    		}
+	    	}
+	    }
+		//s is the word
+	    //y is the document in the word hash s
+	    //oldvals is hash set for s
+	    //you want to duplicate the hash for s, then go through each doc in the hash and divide by count
+	    //put the new hash into newHash
+	    HashMap<String, HashMap<String, Double>> newHash = new HashMap<String, HashMap<String, Double>>();
+	    for(String s : invIndex.keySet()){
+	    	HashMap<String, Integer> oldVals = invIndex.get(s);
+	    	HashMap<String, Double> newVals = new HashMap<String, Double>();
+	    	for (String y : oldVals.keySet()){
+	    		Double freq = ((double) oldVals.get(y)) / wordCount.get(y);
+	    		newVals.put(y, freq);
+	    	}
+	    	newHash.put(s, newVals);
+	    }
+	    
 		return invIndex;
 		
 
@@ -425,7 +455,7 @@ public class SearchEngine {
 		SearchEngine engine = new SearchEngine("data/txt/", "data/index/", "data/cacm_processed.query", "data/cacm_processed.rel");
 		
 		System.out.println("Part A:");
-		//engine.verifyZipf(5);
+		engine.verifyZipf(5);
 		
 		System.out.println();
 		System.out.println("Part B:");

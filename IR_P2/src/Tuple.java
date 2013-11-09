@@ -27,6 +27,6 @@ public class Tuple implements Comparable<Tuple> {
 	}
 	
 	public boolean equals (Tuple other) {
-		if (value == other.value) return true; else return false;
+		if ((value == other.value) && (object == other.object)) return true; else return false;
 	}
 }
