@@ -361,6 +361,34 @@ public class SearchEngine {
 	}
 	
 	private double processQuery(String query, String answers, HashMap<String, HashMap<String, Double>> invertedIndex) {
+		HashMap<String, Double> totalScoreMap = getDocScores(query, invertedIndex);
+		
+		int pAt = 5;
+		PriorityQueue<Tuple> topResults = new PriorityQueue<Tuple>();
+		for (String doc : totalScoreMap.keySet()) {
+			double score = totalScoreMap.get(doc);
+			if (topResults.size() >= pAt) {
+				if (topResults.peek().value < score) {
+					topResults.poll();
+					topResults.add(new Tuple(doc, score));
+				}
+			} else {
+				topResults.add(new Tuple(doc, score));
+			}
+		}
+		
+		HashSet<String> answersSet = parseAnswers(answers, pAt);
+		int numPresent = 0;
+		for (Tuple t : topResults) {
+			String doc = (String) t.object;
+			doc = doc.substring(0, doc.lastIndexOf("."));
+			if (answersSet.contains(doc)) numPresent++;
+		}
+		
+		return (double) numPresent / (double) answersSet.size();
+	}
+	
+	private HashMap<String, Double> getDocScores(String query, HashMap<String, HashMap<String, Double>> invertedIndex) {
 		HashMap<String, Double> totalScoreMap = new HashMap<String, Double>();
 		//For each word in tokenized query, process word and multiply? together
 		StandardTokenizer src = new StandardTokenizer(Version.LUCENE_44, new StringReader(query));
@@ -389,29 +417,7 @@ public class SearchEngine {
 			e.printStackTrace();
 		}
 		
-		int pAt = 5;
-		PriorityQueue<Tuple> topResults = new PriorityQueue<Tuple>();
-		for (String doc : totalScoreMap.keySet()) {
-			double score = totalScoreMap.get(doc);
-			if (topResults.size() >= pAt) {
-				if (topResults.peek().value < score) {
-					topResults.poll();
-					topResults.add(new Tuple(doc, score));
-				}
-			} else {
-				topResults.add(new Tuple(doc, score));
-			}
-		}
-		
-		HashSet<String> answersSet = parseAnswers(answers, pAt);
-		int numPresent = 0;
-		for (Tuple t : topResults) {
-			String doc = (String) t.object;
-			doc = doc.substring(0, doc.lastIndexOf("."));
-			if (answersSet.contains(doc)) numPresent++;
-		}
-		
-		return (double) numPresent / (double) answersSet.size();
+		return totalScoreMap;
 	}
 	
 	/**
@@ -474,9 +480,27 @@ public class SearchEngine {
 	 * Print the 3 most relevant documents in the CACM collection based on term frequency 
 	 * and the 3 most relevant documents using tf-idf weighting
 	 */
-	private void getMostRevelantDocuments() {
+	private void getMostRevelantDocuments(HashMap<String, HashMap<String, Double>> invertedIndex) {
 		String query = "proposal or survey , binary variable , Fibonaccian";
+		HashMap<String, Double> totalScores = getDocScores(query, invertedIndex);
+		int numResults = 3;
+		PriorityQueue<Tuple> topDocs = new PriorityQueue<Tuple>();
+		for (String doc : totalScores.keySet()) {
+			double tfIdfScore = totalScores.get(doc);
+			if (topDocs.size() >= numResults) {
+				if (topDocs.peek().value < tfIdfScore) {
+					topDocs.poll();
+					topDocs.add(new Tuple(doc, tfIdfScore));
+				}
+			} else {
+				topDocs.add(new Tuple(doc, tfIdfScore));
+			}
+		}
 		
+		System.out.println("tf-idf top docs:");
+		while (!topDocs.isEmpty()) {
+			System.out.println(topDocs.poll().object);
+		}
 	}
 
 	public static void main(String[] args) {
@@ -504,6 +528,10 @@ public class SearchEngine {
 		System.out.println();
 		System.out.println("Part F:");
 		engine.bm25();
+
+		System.out.println();
+		System.out.println("Part G:");
+		engine.getMostRevelantDocuments(invertedIndex);
 	}
 
 }
