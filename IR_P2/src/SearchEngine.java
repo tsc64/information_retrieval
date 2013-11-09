@@ -336,7 +336,7 @@ public class SearchEngine {
 	 * tf.idf(i) = termFrequency(i) * log(total#documents / documentFrequency(i))
 	 * Prints Precision@5 on the queries
 	 */
-	private void tf_idf(HashMap<String, HashMap<String, Double>> invertedIndex) {
+	private void tf_idf(HashMap<String, HashMap<String, Double>> invertedIndex, boolean useFreq) {
 		try {
 			double averagePrecision = 0;
 			int numQueries = 0;
@@ -345,7 +345,7 @@ public class SearchEngine {
 			while (queryScanner.hasNextLine()) {
 				String line = queryScanner.nextLine();
 				String query = line.substring(line.indexOf(",") + 1);
-				double precision = processQuery(query, answersScanner.nextLine(), invertedIndex);
+				double precision = processQuery(query, answersScanner.nextLine(), invertedIndex, useFreq);
 				numQueries++;
 				averagePrecision += precision;
 			}
@@ -360,8 +360,8 @@ public class SearchEngine {
 		}
 	}
 	
-	private double processQuery(String query, String answers, HashMap<String, HashMap<String, Double>> invertedIndex) {
-		HashMap<String, Double> totalScoreMap = getDocScores(query, invertedIndex);
+	private double processQuery(String query, String answers, HashMap<String, HashMap<String, Double>> invertedIndex, boolean useFreq) {
+		HashMap<String, Double> totalScoreMap = getDocScores(query, invertedIndex, useFreq);
 		
 		int pAt = 5;
 		PriorityQueue<Tuple> topResults = new PriorityQueue<Tuple>();
@@ -388,7 +388,7 @@ public class SearchEngine {
 		return (double) numPresent / (double) answersSet.size();
 	}
 	
-	private HashMap<String, Double> getDocScores(String query, HashMap<String, HashMap<String, Double>> invertedIndex) {
+	private HashMap<String, Double> getDocScores(String query, HashMap<String, HashMap<String, Double>> invertedIndex, boolean useFreq) {
 		HashMap<String, Double> totalScoreMap = new HashMap<String, Double>();
 		//For each word in tokenized query, process word and multiply? together
 		StandardTokenizer src = new StandardTokenizer(Version.LUCENE_44, new StringReader(query));
@@ -401,7 +401,7 @@ public class SearchEngine {
 			while (tokenStream.incrementToken()) {
 				//Case insensitive
 				String word = charTermAttribute.toString().toLowerCase();
-				HashMap<String, Double> docToTfidfMap = processWord(word, invertedIndex);
+				HashMap<String, Double> docToTfidfMap = processWord(word, invertedIndex, useFreq);
 				if (docToTfidfMap == null) continue;
 				for (String doc : docToTfidfMap.keySet()) {
 					if (totalScoreMap.containsKey(doc)) {
@@ -426,16 +426,17 @@ public class SearchEngine {
 	 * @param invertedIndex
 	 * @return returns mapping of document->tf.idf for given word
 	 */
-	private HashMap<String, Double> processWord(String word, HashMap<String, HashMap<String, Double>> invertedIndex) {
+	private HashMap<String, Double> processWord(String word, HashMap<String, HashMap<String, Double>> invertedIndex, boolean useFreq) {
 		HashMap<String, Double> documentScores = new HashMap<String, Double>();
 		if (!invertedIndex.containsKey(word)) return null;
 		HashMap<String, Double> docToFreqMap = invertedIndex.get(word);
 		
 		for (String doc : docToFreqMap.keySet()) {
 			double freq = docToFreqMap.get(doc);
-			double tf_idf = freq * Math.log((double) numDocuments / (double) docToFreqMap.size());
+			double tf_idf = (useFreq) ? freq : freq * Math.log((double) numDocuments / (double) docToFreqMap.size());
 			documentScores.put(doc, tf_idf);
 		}
+		System.out.println("Word: " + word + ", IDF: " + (Math.log((double) numDocuments / (double) docToFreqMap.size())));
 		
 		return documentScores;
 	}
@@ -480,9 +481,9 @@ public class SearchEngine {
 	 * Print the 3 most relevant documents in the CACM collection based on term frequency 
 	 * and the 3 most relevant documents using tf-idf weighting
 	 */
-	private void getMostRevelantDocuments(HashMap<String, HashMap<String, Double>> invertedIndex) {
+	private void getMostRevelantDocuments(HashMap<String, HashMap<String, Double>> invertedIndex, boolean useFreq) {
 		String query = "proposal or survey , binary variable , Fibonaccian";
-		HashMap<String, Double> totalScores = getDocScores(query, invertedIndex);
+		HashMap<String, Double> totalScores = getDocScores(query, invertedIndex, useFreq);
 		int numResults = 3;
 		PriorityQueue<Tuple> topDocs = new PriorityQueue<Tuple>();
 		for (String doc : totalScores.keySet()) {
@@ -502,7 +503,11 @@ public class SearchEngine {
 			topArr[i] = topDocs.poll();
 		}
 		Arrays.sort(topArr);
-		System.out.println("tf-idf top docs:");
+		if (useFreq) {
+			System.out.println("term frequency top docs:");
+		} else {
+			System.out.println("tf-idf top docs:");
+		}
 		
 		for (int i = numResults - 1; i >= 0; i--) {
 			String docName = (String) topArr[i].object;
@@ -523,7 +528,7 @@ public class SearchEngine {
 		
 		System.out.println();
 		System.out.println("Part C:");
-		engine.tf_idf(invertedIndex);
+		engine.tf_idf(invertedIndex, false);
 
 		System.out.println();
 		System.out.println("Part D:");
@@ -539,7 +544,8 @@ public class SearchEngine {
 
 		System.out.println();
 		System.out.println("Part G:");
-		engine.getMostRevelantDocuments(invertedIndex);
+		engine.getMostRevelantDocuments(invertedIndex, false);
+		engine.getMostRevelantDocuments(invertedIndex, true);
 	}
 
 }
