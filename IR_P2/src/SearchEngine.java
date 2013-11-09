@@ -1,4 +1,3 @@
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -52,7 +51,7 @@ public class SearchEngine {
 				while ( scanner.hasNextLine() ){
 					String line = scanner.nextLine();
 
-					stream = sa.tokenStream(null, new StringReader(line)); //content
+					stream = sa.tokenStream(null, new StringReader(line));
 					CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
 					stream.reset();
 			        while (stream.incrementToken())
@@ -111,7 +110,7 @@ public class SearchEngine {
 			int r = (maxArr.length - i);
 			double prob = (t.value / (double) numWords);
 			max = "Word: " + t.object 
-					+ ", Freq: " + t.value 
+					+ ", Freq: " + (int)t.value 
 					+ ", r: " + r 
 					+ ", prob: " + (Math.round(prob * 10000.0) / 10000.0)
 					+ ", c: " + (Math.round(r * prob * 10000.0) / 10000.0)
@@ -133,7 +132,7 @@ public class SearchEngine {
 					+ ", Freq: " + (int)-t.value 
 					+ ", r: " + r 
 					+ ", prob: " + (Math.round(prob * 1000000000.0) / 1000000000.0)
-					+ ", c: " + (Math.round(r * prob * 1000000000.0) / 1000000000.0)
+					+ ", c: " + (Math.round(r * prob * 10000.0) / 10000.0)
 					+ "\n" + min;
 		}
 		System.out.println(min);
@@ -177,7 +176,7 @@ public class SearchEngine {
 		System.out.println("5: " + num5);
 	}
 	
-	
+	//TODO teach Alec super awesome PQ way to find max's and min's (or see above)
 	private ArrayList<Tuple> min_five (ArrayList<Tuple> current, Tuple next){
 		//newMin holds the largest Tuple of the 6 values
 		Tuple newMin = current.get(0);
@@ -220,7 +219,7 @@ public class SearchEngine {
 	 * Prints the 5 most frequent and the 5 least frequent words
 	 * Returns the inverted index
 	 */
-	private Object invertedIndexFrequencies() {
+	private HashMap<String, HashMap<String, Double>> invertedIndexFrequencies() {
 		HashMap<String, HashMap<String, Integer>> invIndex = new HashMap<String, HashMap<String, Integer>>();
 		
 		try {
@@ -238,6 +237,8 @@ public class SearchEngine {
 					tokenStream.reset();
 					while (tokenStream.incrementToken()) {
 					   String term = charTermAttribute.toString();
+					   //case insensitive
+					   term = term.toLowerCase();
 					   String fileName = child.getName();
 					   if (invIndex.containsKey(term)) {
 						   HashMap<String, Integer> oldMap = invIndex.get(term);
@@ -246,7 +247,7 @@ public class SearchEngine {
 						   } else {
 							   oldMap.put(fileName, 1);
 						   }
-						   invIndex.put(term, oldMap);
+//						   invIndex.put(term, oldMap);
 					   } else {
 						   HashMap<String, Integer> newEntry = new HashMap<String,Integer>();
 						   newEntry.put(fileName, 1);
@@ -270,6 +271,7 @@ public class SearchEngine {
 		}
 		//find the five min and max values in the index
 		for (String x : invIndex.keySet()){
+			//TODO the tuple stores the number of docs that word x appears in, instead of x's total number of occurences
 			minBase = min_five(minBase, new Tuple(x,invIndex.get(x).size()));
 			maxBase = max_five(maxBase, new Tuple(x,invIndex.get(x).size()));
 		}
@@ -315,9 +317,8 @@ public class SearchEngine {
 	    /* testing to see if it worked
 	    for (String s : newHash.keySet()){
 	    	for (String y : newHash.get(s).keySet()){
-	    		System.out.println(newHash.get(s).get(y));
-	    	}
-	    } */
+	    		System.out.println(newHash.get(s).get(y)); */
+
 		return newHash;
 	}
 
@@ -355,16 +356,30 @@ public class SearchEngine {
 	private double processQuery(String query, String answers, HashMap<String, HashMap<String, Double>> invertedIndex) {
 		HashMap<String, Double> totalScoreMap = new HashMap<String, Double>();
 		//For each word in tokenized query, process word and multiply? together
-		//TODO Tokenize each word
-		for (String word : query.split(" ")) {
-			HashMap<String, Double> docToTfidfMap = processWord(word, invertedIndex);
-			for (String doc : docToTfidfMap.keySet()) {
-				if (totalScoreMap.containsKey(doc)) {
-					totalScoreMap.put(doc, totalScoreMap.get(doc) * docToTfidfMap.get(doc));
-				} else {
-					totalScoreMap.put(doc, docToTfidfMap.get(doc));
+		StandardTokenizer src = new StandardTokenizer(Version.LUCENE_44, new StringReader(query));
+		src.setMaxTokenLength(Integer.MAX_VALUE);
+		TokenStream tokenStream = new StandardFilter(Version.LUCENE_44, src);
+		CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
+
+		try {
+			tokenStream.reset();
+			while (tokenStream.incrementToken()) {
+				//Case insensitive
+				String word = charTermAttribute.toString().toLowerCase();
+				HashMap<String, Double> docToTfidfMap = processWord(word, invertedIndex);
+				if (docToTfidfMap == null) continue;
+				for (String doc : docToTfidfMap.keySet()) {
+					if (totalScoreMap.containsKey(doc)) {
+						totalScoreMap.put(doc, totalScoreMap.get(doc) + docToTfidfMap.get(doc));
+					} else {
+						totalScoreMap.put(doc, docToTfidfMap.get(doc));
+					}
 				}
+
 			}
+			tokenStream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 		int pAt = 5;
@@ -384,7 +399,9 @@ public class SearchEngine {
 		HashSet<String> answersSet = parseAnswers(answers, pAt);
 		int numPresent = 0;
 		for (Tuple t : topResults) {
-			if (answersSet.contains(t.object)) numPresent++;
+			String doc = (String) t.object;
+			doc = doc.substring(0, doc.lastIndexOf("."));
+			if (answersSet.contains(doc)) numPresent++;
 		}
 		
 		return (double) numPresent / (double) answersSet.size();
@@ -398,6 +415,7 @@ public class SearchEngine {
 	 */
 	private HashMap<String, Double> processWord(String word, HashMap<String, HashMap<String, Double>> invertedIndex) {
 		HashMap<String, Double> documentScores = new HashMap<String, Double>();
+		if (!invertedIndex.containsKey(word)) return null;
 		HashMap<String, Double> docToFreqMap = invertedIndex.get(word);
 		
 		for (String doc : docToFreqMap.keySet()) {
@@ -458,15 +476,15 @@ public class SearchEngine {
 		SearchEngine engine = new SearchEngine("data/txt/", "data/index/", "data/cacm_processed.query", "data/cacm_processed.rel");
 		
 		System.out.println("Part A:");
-		engine.verifyZipf(5);
+//		engine.verifyZipf(5);
 		
 		System.out.println();
 		System.out.println("Part B:");
-		HashMap<String, HashMap<String, Double>> invertedIndex = (HashMap<String, HashMap<String, Double>>) engine.invertedIndexFrequencies();
+		HashMap<String, HashMap<String, Double>> invertedIndex = engine.invertedIndexFrequencies();
 		
 		System.out.println();
 		System.out.println("Part C:");
-//		engine.tf_idf((HashMap<String, HashMap<String, Double>>) invertedIndex);
+		engine.tf_idf(invertedIndex);
 
 		System.out.println();
 		System.out.println("Part D:");
