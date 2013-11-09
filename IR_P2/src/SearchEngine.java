@@ -321,8 +321,11 @@ public class SearchEngine {
 	    	}
 	    	newHash.put(s, newVals);
 	    }
-	    
-//		return invIndex;
+	    /* testing to see if it worked
+	    for (String s : newHash.keySet()){
+	    	for (String y : newHash.get(s).keySet()){
+	    		System.out.println(newHash.get(s).get(y)); */
+
 		return newHash;
 	}
 
