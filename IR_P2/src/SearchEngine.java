@@ -271,7 +271,7 @@ public class SearchEngine {
 		}
 		//find the five min and max values in the index
 		for (String x : invIndex.keySet()){
-			//TODO the tuple stores the number of docs that word x appears in, instead of x's total freq
+			//TODO the tuple stores the number of docs that word x appears in, instead of x's total number of occurences
 			minBase = min_five(minBase, new Tuple(x,invIndex.get(x).size()));
 			maxBase = max_five(maxBase, new Tuple(x,invIndex.get(x).size()));
 		}
