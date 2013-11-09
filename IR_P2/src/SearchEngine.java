@@ -272,8 +272,15 @@ public class SearchEngine {
 		//find the five min and max values in the index
 		for (String x : invIndex.keySet()){
 			//TODO the tuple stores the number of docs that word x appears in, instead of x's total number of occurences
-			minBase = min_five(minBase, new Tuple(x,invIndex.get(x).size()));
-			maxBase = max_five(maxBase, new Tuple(x,invIndex.get(x).size()));
+			int total = 0;
+			HashMap<String, Integer> docToNumMap = invIndex.get(x);
+			for (String doc : docToNumMap.keySet()) {
+				total += docToNumMap.get(doc);
+			}
+//			minBase = min_five(minBase, new Tuple(x,invIndex.get(x).size()));
+//			maxBase = max_five(maxBase, new Tuple(x,invIndex.get(x).size()));
+			minBase = min_five(minBase, new Tuple(x,total));
+			maxBase = max_five(maxBase, new Tuple(x,total));
 		}
 		//printing the 10 values
 		System.out.println("Five least most common words:");
