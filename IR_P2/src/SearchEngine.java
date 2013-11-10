@@ -283,11 +283,12 @@ public class SearchEngine {
 			maxBase = max_five(maxBase, new Tuple(x,total));
 		}
 		//printing the 10 values
-		System.out.println("Five least most common words:");
+		System.out.println("Five least common words:");
 		System.out.println("Word: Occurrences");
 		for (Tuple x : minBase){
 			System.out.println(x.object + ": " + (int) x.value);
 		}
+		System.out.println();
 		System.out.println("Five most common words:");
 		System.out.println("Word: Occurrences");
 		for (Tuple x : maxBase){
@@ -436,7 +437,7 @@ public class SearchEngine {
 			double tf_idf = (useFreq) ? freq : freq * Math.log((double) numDocuments / (double) docToFreqMap.size());
 			documentScores.put(doc, tf_idf);
 		}
-		System.out.println("Word: " + word + ", IDF: " + (Math.log((double) numDocuments / (double) docToFreqMap.size())));
+//		System.out.println("Word: " + word + ", IDF: " + (Math.log((double) numDocuments / (double) docToFreqMap.size())));
 		
 		return documentScores;
 	}
@@ -520,7 +521,7 @@ public class SearchEngine {
 		SearchEngine engine = new SearchEngine("data/txt/", "data/index/", "data/cacm_processed.query", "data/cacm_processed.rel");
 		
 		System.out.println("Part A:");
-//		engine.verifyZipf(5);
+		engine.verifyZipf(5);
 		
 		System.out.println();
 		System.out.println("Part B:");
