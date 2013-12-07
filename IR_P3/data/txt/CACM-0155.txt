@@ -1,4 +1,0 @@
-Trie Memory
-CACM September, 1960
-Fredkin, E.
-CA600902 JB March 20, 1978  8:50 PM
