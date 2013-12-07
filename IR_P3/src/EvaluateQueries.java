@@ -30,6 +30,8 @@ public class EvaluateQueries {
 		int numResults = 5;
 
 		key2wordsMap = WordCluster.getStem2WordsMap(docsDir);
+		WordCluster.problem1part1(key2wordsMap);
+		
 		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap);
 		word2keyMap = WordCluster.getWord2KeyMap(key2wordsMap);
 		
