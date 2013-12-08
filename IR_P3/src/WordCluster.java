@@ -38,13 +38,11 @@ public class WordCluster {
 	
 	public static void main(String[] args) {
 		allTheWords = wordCounter();
-		System.out.println(windows);
 		for (Tuple t : allTheWords.keySet()){
 			if (t.word.equals("computer")){
 				computerList.add(t.inFile);
 			}
 		}
-		System.out.println(computerList);
 		for (Tuple t : allTheWords.keySet()){
 			if (!(coHash.containsKey(t.word))){
 				coHash.put(t.word, 0);
@@ -54,9 +52,8 @@ public class WordCluster {
 			}
 		}
 		combinedWordCounts = countOfWord(allTheWords);
-		System.out.println(combinedWordCounts.get("computer"));
 		totalWordCount = totalWords(allTheWords);
-		
+		coHash.put("computer", 0);
 		miIterator();
 	}
 	
@@ -218,10 +215,11 @@ public class WordCluster {
 		HashMap<String,Double> wordAndChiVal = new HashMap<String,Double>();
 		HashMap<String,Double> wordAndDice = new HashMap<String,Double>();
 		for (String t : combinedWordCounts.keySet()){
+			if (s != t){
 			wordAndMIVal.put(t, miScore(s,t));
 			wordAndEMIVal.put(t, emiScore(s,t));
 			wordAndChiVal.put(t,chiSquaredScore(s,t));
-			wordAndDice.put(t, diceScore(s,t));
+			wordAndDice.put(t, diceScore(s,t));}
 		}
 		System.out.println("done computing association values");
 		//find 10 max values
@@ -286,13 +284,14 @@ public class WordCluster {
         double wordCountw2 = combinedWordCounts.get(w2);
         double probw1 = wordCountw1 / totalWordCount;
         double probw2 = wordCountw2 / totalWordCount;
+        if (probw2 == 0) System.out.println(w2);
         double probw1w2 = coOccurrences / windows;
-        //System.out.println("probw2: " + coOccurrences);
 		return Math.log(probw1w2 / (probw1 * probw2));
 	}
 
 	private static double emiScore(String w1, String w2) {
 		double coOccurrences = coHash.get(w2);
+		if (coOccurrences == 0) return 0;
 		return miScore(w1,w2) * coOccurrences / windows;
 	}
 
