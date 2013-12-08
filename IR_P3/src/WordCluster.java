@@ -37,7 +37,7 @@ public class WordCluster {
 	public static HashMap<String,Integer> coHash;
 	
 	public enum Similarity {
-		MI(0), EMI(0), CHI(0), DICE(0.05);
+		MI(1000), EMI(0), CHI(0), DICE(0.05);
 		
 		double threshold;
 		Similarity(double threshold) {
@@ -48,8 +48,8 @@ public class WordCluster {
 	
 	public static void main(String[] args) {
 		setUpForSimilarity("computer");
-		miIterator();
-		sim = Similarity.DICE;
+//		miIterator();
+		sim = Similarity.MI;
 		SortedMap<String, SortedSet<String>> key2wordsMap = getStem2WordsMap("data/txt/");
 		subclusterStem2WordsMap(key2wordsMap, true);
 	}
@@ -394,6 +394,7 @@ public class WordCluster {
 
 					if (!word1.equals(word2)) {
 						double similarity = computeSimilarity(word1, word2);
+						System.out.println(similarity);
 						if (similarity >= sim.threshold) {
 							HashSet<String> s1 = wordToOutNodes.get(word1);
 							HashSet<String> s2 = wordToOutNodes.get(word2);

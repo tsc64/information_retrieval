@@ -76,7 +76,7 @@ public class EvaluateQueries {
 		//uncomment the code on the line below for the results in 4d)
 	}
 
-	private static String stemQuery (String query) throws IOException{
+	private static String stemQuery(String query) throws IOException{
 		String newQuery = "";
 		PorterStemmer stemmer = new PorterStemmer();
 		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
@@ -113,6 +113,37 @@ public class EvaluateQueries {
 			}} else newWords = stemmed;
 			newQuery += newWords;
 		}
+		return newQuery;
+	}
+	
+	private static String stemSubclassQuery(String query) throws IOException {
+		File miFile = new File("miSubclusters");
+		File emiFile = new File("emiSubclusters");
+		File chiFile = new File("chiSubclusters");
+		File diceFile = new File("diceSubclusters");
+		WordCluster.sim = WordCluster.Similarity.DICE;
+		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
+		
+		String newQuery = "";
+		PorterStemmer stemmer = new PorterStemmer();
+		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
+		TokenStream stream = sa.tokenStream(null, new StringReader(query));
+		CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
+		stream.reset();
+		while (stream.incrementToken()){
+			String token = cattr.toString();
+			stemmer.setCurrent(token);
+			stemmer.stem();
+			String stemmed = stemmer.getCurrent();
+
+			WordCluster.sim = WordCluster.Similarity.DICE;
+			key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
+			
+			String newWords = "";
+
+			newQuery += newWords;
+		}
+		sa.close();
 		return newQuery;
 	}
 	
