@@ -187,7 +187,7 @@ public class WordCluster {
 		int windows = numDocs();
 		HashMap<Tuple,Integer> soManyWords = wordCounter();
 		int coOccurrences = getCoOccurrences(w1,w2,soManyWords);
-		return miScore(w1,w2) * ;
+		return miScore(w1,w2) * coOccurrences / windows;
 	}
 
 	private static double chiSquaredScore(String w1, String w2) {
