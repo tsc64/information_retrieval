@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -14,6 +15,7 @@ import java.util.TreeSet;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
 import org.tartarus.snowball.ext.PorterStemmer;
 
@@ -98,13 +100,111 @@ public class WordCluster {
 		}
 	}
 
-	private static double miScore(String w1, String w2) {
+	public static Integer numDocs() {
+		File docsDir = new File("data/txt/");
+		int numberOfDocs = 0;
+		File[] children = docsDir.listFiles();
+		for (File child : children) {
+			numberOfDocs += 1;
+		}
+		return numberOfDocs;
+	}
+	
+	public static HashMap<Tuple, Integer> wordCounter() {
+		HashMap<Tuple, Integer> occurences = new HashMap<Tuple, Integer>();
+		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
+		CharArraySet stopWords = sa.STOP_WORDS_SET;
+		TokenStream stream;
+		File docsDir = new File("data/txt/");
+		
+		try {
+			File[] children = docsDir.listFiles();
+			Scanner scanner;
+			for (File child : children) {
+				scanner = new Scanner(new FileReader(child));
+				while ( scanner.hasNextLine() ){
+					String line = scanner.nextLine();
 
-		return 0;
+					stream = sa.tokenStream(null, new StringReader(line));
+					CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
+					stream.reset();
+			        while (stream.incrementToken())
+			        {
+			        	String token = cattr.toString();
+			        	if (!(stopWords.contains(token))){
+			        	Tuple newToken = new Tuple(token,child);
+			            if (occurences.containsKey(newToken)) {
+			            	occurences.put(newToken, occurences.get(token) + 1);
+			            } else {
+			            	occurences.put(newToken, 1);
+			            }}
+			        	else {System.out.println("Lies Tre! There are stopwords!");}
+			        }
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return occurences;
+	}
+	
+	public static HashMap<String,Integer> countOfWord(HashMap<Tuple,Integer> wordCount){
+		HashMap<String, Integer> combinedDocs = new HashMap<String, Integer>();
+		for (Tuple t : wordCount.keySet()){
+			if (combinedDocs.containsKey(t.word)){
+				combinedDocs.put(t.word, (combinedDocs.get(t.word) + wordCount.get(t)));
+			} else {
+				combinedDocs.put(t.word, wordCount.get(t));
+			}
+		}
+		return combinedDocs;
+	}
+	
+	public static Integer totalWords(HashMap<Tuple, Integer> wordCount){
+		int total = 0;
+		for (Tuple s : wordCount.keySet()){
+			total += wordCount.get(s);
+		}
+		return total;
+	}
+	
+	public static Integer getCoOccurrences(String w1, String w2, HashMap<Tuple,Integer> words){
+		ArrayList<File> filesw1 = new ArrayList<File>();
+		ArrayList<File> filesw2 = new ArrayList<File>();
+		for (Tuple t : words.keySet()){
+			if (t.word == w1){
+				filesw1.add(t.inFile);
+			}
+			if (t.word == w2){
+				filesw2.add(t.inFile);
+			}
+		}
+		int countInCommon = 0;
+		for (int i = 0; i < filesw1.size(); i++){
+			if (filesw2.contains(filesw1.get(i))){
+				countInCommon ++;
+			}
+		}
+		return countInCommon;
+	}
+	
+	private static double miScore(String w1, String w2) {
+		HashMap<Tuple,Integer> soManyWords = wordCounter();
+		HashMap<String,Integer> slightlyLessWords = countOfWord(soManyWords);
+		int wordsInCollection = totalWords(soManyWords);
+		int windows = numDocs();
+        int coOccurrences = getCoOccurrences(w1,w2,soManyWords); //TO-DO
+        int wordCountw1 = slightlyLessWords.get(w1);
+        int wordCountw2 = slightlyLessWords.get(w2);
+        double probw1 = wordCountw1 / wordsInCollection;
+        double probw2 = wordCountw2 / wordsInCollection;
+        double probw1w2 = coOccurrences / windows;
+		return probw1w2 / (probw1 * probw2);
 	}
 
 	private static double emiScore(String w1, String w2) {
-		return 0;
+		int windows = numDocs();
+		return miScore(w1,w2);
 	}
 
 	private static double chiSquaredScore(String w1, String w2) {
