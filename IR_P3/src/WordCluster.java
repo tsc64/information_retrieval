@@ -185,7 +185,9 @@ public class WordCluster {
 
 	private static double emiScore(String w1, String w2) {
 		int windows = numDocs();
-		return miScore(w1,w2);
+		HashMap<Tuple,Integer> soManyWords = wordCounter();
+		int coOccurrences = getCoOccurrences(w1,w2,soManyWords);
+		return miScore(w1,w2) * ;
 	}
 
 	private static double chiSquaredScore(String w1, String w2) {
