@@ -3,12 +3,12 @@ import java.io.File;
 
 public class Tuple implements Comparable<Tuple> {
 	public String word;
-	public File inFile;
+	public String inFile;
 	public Double value;
 	
-	public Tuple(String keyword, File file) {
+	public Tuple(String keyword, String filename) {
 		word = keyword;
-		inFile = file;
+		inFile = filename;
 	}
 	
 	public Tuple(String keyword, Double assValue){

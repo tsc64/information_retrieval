@@ -32,17 +32,19 @@ public class WordCluster {
 	public static HashMap<Tuple,Integer> allTheWords = new HashMap<Tuple,Integer>();
 	public static HashMap<String,Integer> combinedWordCounts = new HashMap<String,Integer>();
 	public static int totalWordCount = 0;
-	public static double windows = numDocs();
-	public static ArrayList<File> computerList = new ArrayList<File>();
+	public static double windows = 0;
+	public static ArrayList<String> computerList = new ArrayList<String>();
 	public static HashMap<String,Integer> coHash = new HashMap<String,Integer> ();
 	
 	public static void main(String[] args) {
 		allTheWords = wordCounter();
+		System.out.println(windows);
 		for (Tuple t : allTheWords.keySet()){
-			if (t.word == "computer"){
+			if (t.word.equals("computer")){
 				computerList.add(t.inFile);
 			}
 		}
+		System.out.println(computerList);
 		for (Tuple t : allTheWords.keySet()){
 			if (!(coHash.containsKey(t.word))){
 				coHash.put(t.word, 0);
@@ -52,6 +54,7 @@ public class WordCluster {
 			}
 		}
 		combinedWordCounts = countOfWord(allTheWords);
+		System.out.println(combinedWordCounts.get("computer"));
 		totalWordCount = totalWords(allTheWords);
 		
 		miIterator();
@@ -127,16 +130,6 @@ public class WordCluster {
 		}
 	}
 
-	public static Integer numDocs() {
-		File docsDir = new File("data/txt/");
-		int numberOfDocs = 0;
-		File[] children = docsDir.listFiles();
-		for (File child : children) {
-			numberOfDocs += 1;
-		}
-		return numberOfDocs;
-	}
-
 	public static HashMap<Tuple, Integer> wordCounter() {
 		HashMap<Tuple, Integer> occurences = new HashMap<Tuple, Integer>();
 		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
@@ -148,6 +141,7 @@ public class WordCluster {
 			File[] children = docsDir.listFiles();
 			Scanner scanner;
 			for (File child : children) {
+				windows ++;
 				scanner = new Scanner(new FileReader(child));
 				while ( scanner.hasNextLine() ){
 					String line = scanner.nextLine();
@@ -159,7 +153,7 @@ public class WordCluster {
 					{
 						String token = cattr.toString();
 						if (!(stopWords.contains(token))){
-							Tuple newToken = new Tuple(token,child);
+							Tuple newToken = new Tuple(token,child.toString());
 							if (occurences.containsKey(newToken)) {
 								occurences.put(newToken, occurences.get(token) + 1);
 							} else {
@@ -198,8 +192,8 @@ public class WordCluster {
 	}
 
 	public static Integer getCoOccurrences(String w1, String w2, HashMap<Tuple,Integer> words){
-		ArrayList<File> filesw1 = new ArrayList<File>();
-		ArrayList<File> filesw2 = new ArrayList<File>();
+		ArrayList<String> filesw1 = new ArrayList<String>();
+		ArrayList<String> filesw2 = new ArrayList<String>();
 		for (Tuple t : words.keySet()){
 			if (t.word == w1){
 				filesw1.add(t.inFile);
@@ -279,17 +273,18 @@ public class WordCluster {
 	}
 	
 	private static double miScore(String w1, String w2) {
-        int coOccurrences = coHash.get(w2);
-        int wordCountw1 = combinedWordCounts.get(w1);
-        int wordCountw2 = combinedWordCounts.get(w2);
+        double coOccurrences = coHash.get(w2);
+        double wordCountw1 = combinedWordCounts.get(w1);
+        double wordCountw2 = combinedWordCounts.get(w2);
         double probw1 = wordCountw1 / totalWordCount;
         double probw2 = wordCountw2 / totalWordCount;
         double probw1w2 = coOccurrences / windows;
+        //System.out.println("probw2: " + coOccurrences);
 		return Math.log(probw1w2 / (probw1 * probw2));
 	}
 
 	private static double emiScore(String w1, String w2) {
-		int coOccurrences = coHash.get(w2);
+		double coOccurrences = coHash.get(w2);
 		return miScore(w1,w2) * coOccurrences / windows;
 	}
 
