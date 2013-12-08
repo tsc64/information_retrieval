@@ -264,12 +264,20 @@ public class WordCluster {
 			else { highQdice.add(new Tuple(x,dicevalue)); }
 		}
 		//print out final values
+		String outputmi = "MI VALUES";
+		String outputemi = "EMI VALUES";
+		String outputchi = "CHI VALUES";
+		String outputdice = "DICE VALUES";
 		for (int i = 0; i < 10; i++){
-			
-			String output = "" + highQmi.peek().word + highQmi.poll().value + highQemi.peek().word + highQemi.poll().value +
-					highQchi.peek().word + highQchi.poll().value + highQdice.peek().word + highQdice.poll().value;
-			System.out.println(output);
+			outputmi += "\n" + highQmi.peek().word + ": " + highQmi.poll().value;
+			outputemi += "\n" + highQemi.peek().word + ": " + highQemi.poll().value;
+			outputchi += "\n" + highQchi.peek().word + ": " + highQchi.poll().value;
+			outputdice += "\n" + highQdice.peek().word + ": " + highQdice.poll().value;
 		}
+		System.out.println(outputmi + "\n");
+		System.out.println(outputemi + "\n");
+		System.out.println(outputchi + "\n");
+		System.out.println(outputdice);
 	}
 	
 	private static double miScore(String w1, String w2) {
