@@ -66,6 +66,7 @@ public class WordCluster {
 						}
 					}
 				}
+
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -84,9 +85,8 @@ public class WordCluster {
 			setSizeToNumClasses.put(setSize, value + 1);	
 		}
 		System.out.println(setSizeToNumClasses);
-//		System.out.println(stemmedClasses);
 	}
-	
+
 	public static void problem1part2(SortedMap<String, SortedSet<String>> map) {
 		for (String stemmed : map.keySet()) {
 			SortedSet<String> set = map.get(stemmed);
@@ -106,14 +106,14 @@ public class WordCluster {
 		}
 		return numberOfDocs;
 	}
-	
+
 	public static HashMap<Tuple, Integer> wordCounter() {
 		HashMap<Tuple, Integer> occurences = new HashMap<Tuple, Integer>();
 		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
 		CharArraySet stopWords = sa.STOP_WORDS_SET;
 		TokenStream stream;
 		File docsDir = new File("data/txt/");
-		
+
 		try {
 			File[] children = docsDir.listFiles();
 			Scanner scanner;
@@ -125,18 +125,18 @@ public class WordCluster {
 					stream = sa.tokenStream(null, new StringReader(line));
 					CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
 					stream.reset();
-			        while (stream.incrementToken())
-			        {
-			        	String token = cattr.toString();
-			        	if (!(stopWords.contains(token))){
-			        	Tuple newToken = new Tuple(token,child);
-			            if (occurences.containsKey(newToken)) {
-			            	occurences.put(newToken, occurences.get(token) + 1);
-			            } else {
-			            	occurences.put(newToken, 1);
-			            }}
-			        	else {System.out.println("Lies Tre! There are stopwords!");}
-			        }
+					while (stream.incrementToken())
+					{
+						String token = cattr.toString();
+						if (!(stopWords.contains(token))){
+							Tuple newToken = new Tuple(token,child);
+							if (occurences.containsKey(newToken)) {
+								occurences.put(newToken, occurences.get(token) + 1);
+							} else {
+								occurences.put(newToken, 1);
+							}}
+						else {System.out.println("Lies Tre! There are stopwords!");}
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -144,7 +144,7 @@ public class WordCluster {
 		}
 		return occurences;
 	}
-	
+
 	public static HashMap<String,Integer> countOfWord(HashMap<Tuple,Integer> wordCount){
 		HashMap<String, Integer> combinedDocs = new HashMap<String, Integer>();
 		for (Tuple t : wordCount.keySet()){
@@ -156,7 +156,7 @@ public class WordCluster {
 		}
 		return combinedDocs;
 	}
-	
+
 	public static Integer totalWords(HashMap<Tuple, Integer> wordCount){
 		int total = 0;
 		for (Tuple s : wordCount.keySet()){
@@ -164,7 +164,7 @@ public class WordCluster {
 		}
 		return total;
 	}
-	
+
 	public static Integer getCoOccurrences(String w1, String w2, HashMap<Tuple,Integer> words){
 		ArrayList<File> filesw1 = new ArrayList<File>();
 		ArrayList<File> filesw2 = new ArrayList<File>();
@@ -184,18 +184,18 @@ public class WordCluster {
 		}
 		return countInCommon;
 	}
-	
+
 	private static double miScore(String w1, String w2) {
 		HashMap<Tuple,Integer> soManyWords = wordCounter();
 		HashMap<String,Integer> slightlyLessWords = countOfWord(soManyWords);
 		int wordsInCollection = totalWords(soManyWords);
 		int windows = numDocs();
-        int coOccurrences = getCoOccurrences(w1,w2,soManyWords); //TO-DO
-        int wordCountw1 = slightlyLessWords.get(w1);
-        int wordCountw2 = slightlyLessWords.get(w2);
-        double probw1 = wordCountw1 / wordsInCollection;
-        double probw2 = wordCountw2 / wordsInCollection;
-        double probw1w2 = coOccurrences / windows;
+		int coOccurrences = getCoOccurrences(w1,w2,soManyWords); //TO-DO
+		int wordCountw1 = slightlyLessWords.get(w1);
+		int wordCountw2 = slightlyLessWords.get(w2);
+		double probw1 = wordCountw1 / wordsInCollection;
+		double probw2 = wordCountw2 / wordsInCollection;
+		double probw1w2 = coOccurrences / windows;
 		return probw1w2 / (probw1 * probw2);
 	}
 
@@ -224,59 +224,74 @@ public class WordCluster {
 	 * 
 	 */
 	public static SortedMap<String, SortedSet<String>> subclusterStem2WordsMap(SortedMap<String, SortedSet<String>> stem2WordsMap){
-		SortedMap<String, SortedSet<String>> map = new TreeMap<String, SortedSet<String>>();
+		//cluster name -> subcluster set
+		SortedMap<String, SortedSet<String>> subclusterMap = new TreeMap<String, SortedSet<String>>();
 
 		int threshold = 0;
 
 		for (String stemmed : stem2WordsMap.keySet()) {
-			SortedSet<String> set = stem2WordsMap.get(stemmed);
+			//a set of words with the same stem
+			SortedSet<String> wordsSet = stem2WordsMap.get(stemmed);
 			HashMap<String, HashSet<String>> wordToOutNodes = new HashMap<String, HashSet<String>>();
-			for (String word1 : set) {
-				for (String word2 : set) {
+			for (String word1 : wordsSet) {
+				for (String word2 : wordsSet) {
+					if (!wordToOutNodes.containsKey(word1)) {
+						wordToOutNodes.put(word1, new HashSet<String>());
+					}
+					if (!wordToOutNodes.containsKey(word2)) {
+						wordToOutNodes.put(word2, new HashSet<String>());
+					}
 					if (word1 != word2 && diceScore(word1, word2) >= threshold) {
-						HashSet<String> s1 = (wordToOutNodes.containsKey(word1)) ? wordToOutNodes.get(word1) : new HashSet<String>();
-						HashSet<String> s2 = (wordToOutNodes.containsKey(word2)) ? wordToOutNodes.get(word2) : new HashSet<String>();
+						HashSet<String> s1 = wordToOutNodes.get(word1);
+						HashSet<String> s2 = wordToOutNodes.get(word2);
 						s1.add(word2);
 						s2.add(word1);
-						wordToOutNodes.put(word1, s1);
-						wordToOutNodes.put(word2, s2);
 					}
 				}
 			}
 			LinkedList<HashSet<String>> subclusterList = new LinkedList<HashSet<String>>();
 			for (String word : wordToOutNodes.keySet()) {
-				boolean toContinue = true;
+				boolean wordInACluster = false;
 				//checks if word is already in a cluster- continue if not
 				for (HashSet<String> subcluster : subclusterList) {
 					if (subcluster.contains(word)) {
-						toContinue = false;
+						wordInACluster = true;
 						break;
 					}
 				}
-				if (toContinue) {
-					HashSet<String> subcluster = new HashSet<String>();
-					fillSubcluster(word, subcluster, wordToOutNodes);
-					subclusterList.add(subcluster);
+				if (!wordInACluster) {
+					HashSet<String> newCluster = new HashSet<String>();
+					fillSubcluster(word, newCluster, wordToOutNodes);
+					subclusterList.add(newCluster);
 				}
 			}
 			for (int i = 0; i < subclusterList.size(); i++) {
 				HashSet<String> subcluster = subclusterList.get(i);
-				//TODO turn subcluster into SortedSet
-				TreeSet<String> sub = null;//(TreeSet<String>) subcluster;
-				map.put(stemmed + i, sub);
+				//Turn subcluster into SortedSet
+				TreeSet<String> sub = new TreeSet<String>();//(TreeSet<String>) subcluster;
+				for (String str : subcluster) {
+					sub.add(str);
+				}
+				subclusterMap.put(stemmed + i, sub);
+			}
+			
+			//prints to compare to problem 1 part 2
+			if (stem2WordsMap.get(stemmed).size() > 10) {
+				System.out.println(stemmed + ":");
+				for (HashSet<String> subcluster : subclusterList) {
+					System.out.println(subcluster);
+				}
 			}
 		}
 
-		return map; //after you implement this method, you don't have to keep this line. You can build a new map and return it.
+		return subclusterMap;
 	}
 
 	private static void fillSubcluster(String word, final HashSet<String> subcluster, final HashMap<String, HashSet<String>> wordToOutNodes) {
 		if (!subcluster.contains(word)) {
 			subcluster.add(word);
-			if (wordToOutNodes != null) {
-				for (String child : wordToOutNodes.keySet()) { //TODO check over
-					fillSubcluster(child, subcluster, wordToOutNodes);
-				}
+			for (String child : wordToOutNodes.get(word)) {
+				fillSubcluster(child, subcluster, wordToOutNodes);
 			}
 		}
 	}
