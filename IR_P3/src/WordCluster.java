@@ -32,35 +32,47 @@ public class WordCluster {
 	 * Given a directory containing a set of text files (CACM), return a mapping from stem to words with the given stem.
 	 */
 	public static SortedMap<String, SortedSet<String>> getStem2WordsMap(String text_dir) {
-		TreeMap<String, TreeSet<String>> map = new TreeMap<String, TreeSet<String>>(); 
+		SortedMap<String, SortedSet<String>> map = new TreeMap<String, SortedSet<String>>(); 
 		PorterStemmer stemmer = new PorterStemmer();
 		File dir = new File(text_dir);
+		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
+		TokenStream stream;
 
+		System.out.println(StandardAnalyzer.STOP_WORDS_SET);
 		try {
 			File[] children = dir.listFiles();
 			Scanner scanner;
 			for (File child : children) {
 				scanner = new Scanner(new FileReader(child));
-				while (scanner.hasNext()) {
-					String token = scanner.next();
-					stemmer.setCurrent(token);
-					stemmer.stem();
-					String stemmed = stemmer.getCurrent();
-					if (map.containsKey(stemmed)) {
-						SortedSet<String> set = map.get(stemmed);
-						set.add(token);
-					} else {
-						TreeSet<String> set = new TreeSet<String>();
+				while ( scanner.hasNextLine() ){
+					String line = scanner.nextLine();
 
-						set.add(token);
-						map.put(stemmed, set);
+					stream = sa.tokenStream(null, new StringReader(line));
+					CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
+					stream.reset();
+					while (stream.incrementToken())
+					{
+						String token = cattr.toString();
+						stemmer.setCurrent(token);
+						stemmer.stem();
+						String stemmed = stemmer.getCurrent();
+						if (map.containsKey(stemmed)) {
+							TreeSet<String> set = (TreeSet<String>) map.get(stemmed);
+							set.add(token);
+
+						} else {
+							TreeSet<String> set = new TreeSet<String>();
+							set.add(token);
+							map.put(stemmed, set);
+						}
 					}
 				}
 			}
 		} catch (IOException e) {
-
+			e.printStackTrace();
 		}
-		return null;
+		sa.close();
+		return map;
 	}
 
 	public static void problem1part1(SortedMap<String, SortedSet<String>> map) {
@@ -72,13 +84,20 @@ public class WordCluster {
 			int value = (setSizeToNumClasses.containsKey(setSize)) ? setSizeToNumClasses.get(setSize) : 0;
 			setSizeToNumClasses.put(setSize, value + 1);	
 		}
-
-		for (int key : setSizeToNumClasses.keySet()) {
-			int value = setSizeToNumClasses.get(key);
-			System.out.println(key + " : " + value);
+		System.out.println(setSizeToNumClasses);
+		
+		
+//		System.out.println(stemmedClasses);
+	}
+	
+	public static void problem1part2(SortedMap<String, SortedSet<String>> map) {
+		for (String stemmed : map.keySet()) {
+			SortedSet<String> set = map.get(stemmed);
+			int setSize = set.size();
+			if (setSize > 10) {
+				System.out.println(set);
+			}
 		}
-
-		System.out.println(stemmedClasses);
 	}
 
 	public static Integer numDocs() {
@@ -257,8 +276,10 @@ public class WordCluster {
 	private static void fillSubcluster(String word, final HashSet<String> subcluster, final HashMap<String, HashSet<String>> wordToOutNodes) {
 		if (!subcluster.contains(word)) {
 			subcluster.add(word);
-			for (String child : wordToOutNodes.get(wordToOutNodes)) {
-				fillSubcluster(child, subcluster, wordToOutNodes);
+			if (wordToOutNodes != null) {
+				for (String child : wordToOutNodes.keySet()) { //TODO check over
+					fillSubcluster(child, subcluster, wordToOutNodes);
+				}
 			}
 		}
 	}
@@ -279,7 +300,4 @@ public class WordCluster {
 		return map;
 	}
 
-	public static void main(String[] args) {
-
-	}
 }
