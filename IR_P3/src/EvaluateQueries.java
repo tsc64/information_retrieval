@@ -34,7 +34,9 @@ public class EvaluateQueries {
 		WordCluster.problem1part1(key2wordsMap);
 		System.out.println("\nProblem 1 Part 2");
 		WordCluster.problem1part2(key2wordsMap);
-//		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap);
+		System.out.println("\nProblem 1 Part 3b");
+		WordCluster.main(null);
+		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap);
 //		word2keyMap = WordCluster.getWord2KeyMap(key2wordsMap);
 		
 		System.out.println();

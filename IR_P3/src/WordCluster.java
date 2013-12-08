@@ -286,7 +286,7 @@ public class WordCluster {
 		//cluster name -> subcluster set
 		SortedMap<String, SortedSet<String>> subclusterMap = new TreeMap<String, SortedSet<String>>();
 
-		int threshold = 0;
+		double threshold = 0.005;
 
 		for (String stemmed : stem2WordsMap.keySet()) {
 			//a set of words with the same stem
@@ -300,7 +300,12 @@ public class WordCluster {
 					if (!wordToOutNodes.containsKey(word2)) {
 						wordToOutNodes.put(word2, new HashSet<String>());
 					}
-					if (word1 != word2 && diceScore(word1, word2) >= threshold) {
+//					double similarity = diceScore(word1, word2);
+//					double similarity = miScore(word1, word2);
+//					double similarity = emiScore(word1, word2);
+					double similarity = chiSquaredScore(word1, word2);
+//					System.out.print (similarity + " ");
+					if (!word1.equals(word2) && similarity >= threshold) {
 						HashSet<String> s1 = wordToOutNodes.get(word1);
 						HashSet<String> s2 = wordToOutNodes.get(word2);
 						s1.add(word2);
@@ -308,6 +313,7 @@ public class WordCluster {
 					}
 				}
 			}
+//			System.out.println();
 			LinkedList<HashSet<String>> subclusterList = new LinkedList<HashSet<String>>();
 			for (String word : wordToOutNodes.keySet()) {
 				boolean wordInACluster = false;
@@ -338,7 +344,7 @@ public class WordCluster {
 			if (stem2WordsMap.get(stemmed).size() > 10) {
 				System.out.println(stemmed + ":");
 				for (HashSet<String> subcluster : subclusterList) {
-					System.out.println(subcluster);
+					System.out.println("     " + subcluster);
 				}
 			}
 		}
