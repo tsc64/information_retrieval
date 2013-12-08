@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,10 +33,12 @@ public class EvaluateQueries {
 		key2wordsMap = WordCluster.getStem2WordsMap(docsDir);
 		System.out.println("Problem 1 Part 1");
 		WordCluster.problem1part1(key2wordsMap);
+		
 		System.out.println("\nProblem 1 Part 2");
 		WordCluster.problem1part2(key2wordsMap);
+		
 		System.out.println("\nProblem 1 Part 3b");
-		WordCluster.main(null);
+		
 		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap);
 //		word2keyMap = WordCluster.getWord2KeyMap(key2wordsMap);
 		
