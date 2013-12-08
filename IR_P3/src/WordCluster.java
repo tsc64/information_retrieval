@@ -72,7 +72,6 @@ public class WordCluster {
 		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
 		TokenStream stream;
 
-		System.out.println(StandardAnalyzer.STOP_WORDS_SET);
 		try {
 			File[] children = dir.listFiles();
 			Scanner scanner;
@@ -119,8 +118,6 @@ public class WordCluster {
 			setSizeToNumClasses.put(setSize, value + 1);	
 		}
 		System.out.println(setSizeToNumClasses);
-		
-		
 //		System.out.println(stemmedClasses);
 	}
 	
@@ -129,7 +126,7 @@ public class WordCluster {
 			SortedSet<String> set = map.get(stemmed);
 			int setSize = set.size();
 			if (setSize > 10) {
-				System.out.println(set);
+				System.out.println(stemmed + ": " + set);
 			}
 		}
 	}
