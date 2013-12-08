@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Scanner;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -28,6 +29,39 @@ import org.tartarus.snowball.ext.PorterStemmer;
  * getWord2StemMap()
  */
 public class WordCluster {
+	public static HashMap<Tuple,Integer> allTheWords = new HashMap<Tuple,Integer>();
+	public static HashMap<String,Integer> combinedWordCounts = new HashMap<String,Integer>();
+	public static int totalWordCount = 0;
+	public static double windows = numDocs();
+	public static ArrayList<File> computerList = new ArrayList<File>();
+	public static HashMap<String,Integer> coHash = new HashMap<String,Integer> ();
+	
+	public static void main(String[] args) {
+		allTheWords = wordCounter();
+		for (Tuple t : allTheWords.keySet()){
+			if (t.word == "computer"){
+				computerList.add(t.inFile);
+			}
+		}
+		for (Tuple t : allTheWords.keySet()){
+			if (!(coHash.containsKey(t.word))){
+				coHash.put(t.word, 0);
+			}
+			if (computerList.contains(t.inFile)){
+				coHash.put(t.word, coHash.get(t.word)+1);
+			}
+		}
+		combinedWordCounts = countOfWord(allTheWords);
+		totalWordCount = totalWords(allTheWords);
+		int i = 0;
+/**		for (String s : combinedWordCounts.keySet()){
+			coHash.put(s,getCoOccurrences(s,"computers",allTheWords));
+			System.out.println("coHash #: " + i++);
+		}  */
+		miIterator();
+	}
+	
+	
 	/**
 	 * Given a directory containing a set of text files (CACM), return a mapping from stem to words with the given stem.
 	 */
@@ -141,10 +175,12 @@ public class WordCluster {
 			        	else {System.out.println("Lies Tre! There are stopwords!");}
 			        }
 				}
+				scanner.close();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println("done with main word count");
 		return occurences;
 	}
 	
@@ -167,7 +203,10 @@ public class WordCluster {
 		}
 		return total;
 	}
-	
+	//make a list of all the files that computer is in
+	//make a hash of (word,count)
+	//for Tuple t : allWords
+	//if compList.contains(t.inFile) then Hash.put(word,count+1)
 	public static Integer getCoOccurrences(String w1, String w2, HashMap<Tuple,Integer> words){
 		ArrayList<File> filesw1 = new ArrayList<File>();
 		ArrayList<File> filesw2 = new ArrayList<File>();
@@ -188,35 +227,54 @@ public class WordCluster {
 		return countInCommon;
 	}
 	
+	private static void miIterator(){
+		String s = "computer";
+		HashMap<String,Double> wordAndMIVal = new HashMap<String,Double>();
+		HashMap<String,Double> wordAndEMIVal = new HashMap<String,Double>();
+		HashMap<String,Double> wordAndChiVal = new HashMap<String,Double>();
+		HashMap<String,Double> wordAndDice = new HashMap<String,Double>();
+		int i = 0;
+		for (String t : combinedWordCounts.keySet()){
+			wordAndMIVal.put(t, miScore(s,t));
+			wordAndEMIVal.put(t, emiScore(s,t));
+			wordAndChiVal.put(t,chiSquaredScore(s,t));
+			wordAndDice.put(t, diceScore(s,t));
+		}
+		System.out.println("done computing association values");
+		//find 10 max values
+		PriorityQueue<Tuple> highQ = new PriorityQueue<Tuple>();
+		
+	}
+	
 	private static double miScore(String w1, String w2) {
-		HashMap<Tuple,Integer> soManyWords = wordCounter();
-		HashMap<String,Integer> slightlyLessWords = countOfWord(soManyWords);
-		int wordsInCollection = totalWords(soManyWords);
-		int windows = numDocs();
-        int coOccurrences = getCoOccurrences(w1,w2,soManyWords); //TO-DO
-        int wordCountw1 = slightlyLessWords.get(w1);
-        int wordCountw2 = slightlyLessWords.get(w2);
-        double probw1 = wordCountw1 / wordsInCollection;
-        double probw2 = wordCountw2 / wordsInCollection;
+        int coOccurrences = coHash.get(w2);
+        int wordCountw1 = combinedWordCounts.get(w1);
+        int wordCountw2 = combinedWordCounts.get(w2);
+        double probw1 = wordCountw1 / totalWordCount;
+        double probw2 = wordCountw2 / totalWordCount;
         double probw1w2 = coOccurrences / windows;
-		return probw1w2 / (probw1 * probw2);
+		return Math.log(probw1w2 / (probw1 * probw2));
 	}
 
 	private static double emiScore(String w1, String w2) {
-		int windows = numDocs();
-		HashMap<Tuple,Integer> soManyWords = wordCounter();
-		int coOccurrences = getCoOccurrences(w1,w2,soManyWords);
+		int coOccurrences = coHash.get(w2);
 		return miScore(w1,w2) * coOccurrences / windows;
 	}
 
 	private static double chiSquaredScore(String w1, String w2) {
-
-		return 0;
+		double coOccurrences = coHash.get(w2);
+		double countw1 = combinedWordCounts.get(w1);
+		double countw2 = combinedWordCounts.get(w2);
+		double numerator = (coOccurrences - (countw1 * countw2) / totalWordCount);
+		double denom = countw1 * countw2 / totalWordCount;
+		return numerator * numerator / denom;
 	}
 
 	private static double diceScore(String w1, String w2) {
-
-		return 0;
+		double coOccurrences = coHash.get(w2);
+		int countw1 = combinedWordCounts.get(w1);
+		double countw2 = combinedWordCounts.get(w2);
+		return 2 * coOccurrences / (countw1 + countw2);
 	}
 
 	/**
