@@ -53,11 +53,7 @@ public class WordCluster {
 		}
 		combinedWordCounts = countOfWord(allTheWords);
 		totalWordCount = totalWords(allTheWords);
-		int i = 0;
-/**		for (String s : combinedWordCounts.keySet()){
-			coHash.put(s,getCoOccurrences(s,"computers",allTheWords));
-			System.out.println("coHash #: " + i++);
-		}  */
+		
 		miIterator();
 	}
 	
@@ -200,10 +196,8 @@ public class WordCluster {
 		}
 		return total;
 	}
-	//make a list of all the files that computer is in
-	//make a hash of (word,count)
-	//for Tuple t : allWords
-	//if compList.contains(t.inFile) then Hash.put(word,count+1)
+	
+	
 	public static Integer getCoOccurrences(String w1, String w2, HashMap<Tuple,Integer> words){
 		ArrayList<File> filesw1 = new ArrayList<File>();
 		ArrayList<File> filesw2 = new ArrayList<File>();
@@ -230,7 +224,6 @@ public class WordCluster {
 		HashMap<String,Double> wordAndEMIVal = new HashMap<String,Double>();
 		HashMap<String,Double> wordAndChiVal = new HashMap<String,Double>();
 		HashMap<String,Double> wordAndDice = new HashMap<String,Double>();
-		int i = 0;
 		for (String t : combinedWordCounts.keySet()){
 			wordAndMIVal.put(t, miScore(s,t));
 			wordAndEMIVal.put(t, emiScore(s,t));
@@ -239,8 +232,51 @@ public class WordCluster {
 		}
 		System.out.println("done computing association values");
 		//find 10 max values
-		PriorityQueue<Tuple> highQ = new PriorityQueue<Tuple>();
-		
+		PriorityQueue<Tuple> highQmi = new PriorityQueue<Tuple>();
+		PriorityQueue<Tuple> highQemi = new PriorityQueue<Tuple>();
+		PriorityQueue<Tuple> highQchi = new PriorityQueue<Tuple>();
+		PriorityQueue<Tuple> highQdice = new PriorityQueue<Tuple>();
+		for (String x : wordAndMIVal.keySet()){
+			double mivalue = wordAndMIVal.get(x);
+			double emivalue = wordAndEMIVal.get(x);
+			double chivalue = wordAndChiVal.get(x);
+			double dicevalue = wordAndDice.get(x);
+			if (highQmi.size() >= 10){
+				if (highQmi.peek().value < mivalue){
+					highQmi.poll();
+					highQmi.add(new Tuple(x,mivalue));
+				}
+			}
+			else { highQmi.add(new Tuple(x,mivalue)); }
+			if (highQemi.size() >= 10){
+				if (highQemi.peek().value < emivalue){
+					highQemi.poll();
+					highQemi.add(new Tuple(x,emivalue));
+				}
+			}
+			else { highQemi.add(new Tuple(x,emivalue)); }
+			if (highQchi.size() >= 10){
+				if (highQchi.peek().value < chivalue){
+					highQchi.poll();
+					highQchi.add(new Tuple(x,chivalue));
+				}
+			}
+			else { highQchi.add(new Tuple(x,chivalue)); }
+			if (highQdice.size() >= 10){
+				if (highQdice.peek().value < dicevalue){
+					highQdice.poll();
+					highQdice.add(new Tuple(x,dicevalue));
+				}
+			}
+			else { highQdice.add(new Tuple(x,dicevalue)); }
+		}
+		//print out final values
+		for (int i = 0; i < 10; i++){
+			
+			String output = "" + highQmi.peek().word + highQmi.poll().value + highQemi.peek().word + highQemi.poll().value +
+					highQchi.peek().word + highQchi.poll().value + highQdice.peek().word + highQdice.poll().value;
+			System.out.println(output);
+		}
 	}
 	
 	private static double miScore(String w1, String w2) {
@@ -269,7 +305,7 @@ public class WordCluster {
 
 	private static double diceScore(String w1, String w2) {
 		double coOccurrences = coHash.get(w2);
-		int countw1 = combinedWordCounts.get(w1);
+		double countw1 = combinedWordCounts.get(w1);
 		double countw2 = combinedWordCounts.get(w2);
 		return 2 * coOccurrences / (countw1 + countw2);
 	}
