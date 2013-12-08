@@ -13,6 +13,7 @@ import java.util.SortedSet;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
+import org.tartarus.snowball.ext.PorterStemmer;
 
 public class EvaluateQueries {
 	private static SortedMap<String, String> word2keyMap = null;
@@ -53,9 +54,13 @@ public class EvaluateQueries {
 	 * @return a modified query
 	 */
 	private static String preprocessQuery(String query){
-		return query;
+		return stemQuery(query);
 	}
 
+	private static String stemQuery (String query){
+		return query;
+	}
+	
 	private static Map<Integer, String> loadQueries(String filename) {
 		Map<Integer, String> queryIdMap = new HashMap<Integer, String>();
 		BufferedReader in = null;
@@ -111,8 +116,7 @@ public class EvaluateQueries {
 		return queryAnswerMap;
 	}
 
-	private static double precision(HashSet<String> answers,
-			List<String> results) {
+	private static double precision(HashSet<String> answers,List<String> results) {
 		double matches = 0;
 		for (String result : results) {
 			if (answers.contains(result))
