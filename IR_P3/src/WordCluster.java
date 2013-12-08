@@ -31,8 +31,8 @@ import org.tartarus.snowball.ext.PorterStemmer;
 public class WordCluster {
 	public static HashMap<Tuple,Integer> allTheWords;
 	public static HashMap<String,Integer> combinedWordCounts;
-	public static int totalWordCount = 0;
-	public static double windows = 0;
+	public static int totalWordCount;
+	public static double windows;
 	public static ArrayList<String> computerList;
 	public static HashMap<String,Integer> coHash;
 
@@ -41,11 +41,14 @@ public class WordCluster {
 			args = new String[]{"computer"};
 		}
 		String mainWord = args[0];
+		totalWordCount = 0;
+		windows = 0;
 
 		if (allTheWords == null) {
 			allTheWords = new HashMap<Tuple,Integer>();
 			allTheWords = wordCounter();
 		}
+		
 //		System.out.println(windows);
 		computerList = new ArrayList<String>();
 		for (Tuple t : allTheWords.keySet()){
@@ -53,6 +56,7 @@ public class WordCluster {
 				computerList.add(t.inFile);
 			}
 		}
+		
 //		System.out.println(computerList);
 		coHash = new HashMap<String,Integer>();
 		for (Tuple t : allTheWords.keySet()){
@@ -63,14 +67,17 @@ public class WordCluster {
 				coHash.put(t.word, coHash.get(t.word)+1);
 			}
 		}
+		
 		if (combinedWordCounts == null) {
 			combinedWordCounts = new HashMap<String,Integer>();
 			combinedWordCounts = countOfWord(allTheWords);
 		}
 //		System.out.println(combinedWordCounts.get("computer"));
 		totalWordCount = totalWords(allTheWords);
-
-		miIterator();
+		coHash.put(mainWord, 0);
+		if (mainWord.equals("computer")) {
+			miIterator();
+		}
 	}
 
 
@@ -231,10 +238,11 @@ public class WordCluster {
 		HashMap<String,Double> wordAndChiVal = new HashMap<String,Double>();
 		HashMap<String,Double> wordAndDice = new HashMap<String,Double>();
 		for (String t : combinedWordCounts.keySet()){
+			if (s != t){
 			wordAndMIVal.put(t, miScore(s,t));
 			wordAndEMIVal.put(t, emiScore(s,t));
 			wordAndChiVal.put(t,chiSquaredScore(s,t));
-			wordAndDice.put(t, diceScore(s,t));
+			wordAndDice.put(t, diceScore(s,t));}
 		}
 //		System.out.println("done computing association values");
 		//find 10 max values
@@ -277,27 +285,36 @@ public class WordCluster {
 			else { highQdice.add(new Tuple(x,dicevalue)); }
 		}
 		//print out final values
+		String outputmi = "MI VALUES";
+		String outputemi = "EMI VALUES";
+		String outputchi = "CHI VALUES";
+		String outputdice = "DICE VALUES";
 		for (int i = 0; i < 10; i++){
-
-			String output = "" + highQmi.peek().word + highQmi.poll().value + highQemi.peek().word + highQemi.poll().value +
-					highQchi.peek().word + highQchi.poll().value + highQdice.peek().word + highQdice.poll().value;
-//			System.out.println(output);
+			outputmi += "\n" + highQmi.peek().word + ": " + highQmi.poll().value;
+			outputemi += "\n" + highQemi.peek().word + ": " + highQemi.poll().value;
+			outputchi += "\n" + highQchi.peek().word + ": " + highQchi.poll().value;
+			outputdice += "\n" + highQdice.peek().word + ": " + highQdice.poll().value;
 		}
+		System.out.println(outputmi + "\n");
+		System.out.println(outputemi + "\n");
+		System.out.println(outputchi + "\n");
+		System.out.println(outputdice);
 	}
 
 	private static double miScore(String w1, String w2) {
-		double coOccurrences = coHash.get(w2);
-		double wordCountw1 = combinedWordCounts.get(w1);
-		double wordCountw2 = combinedWordCounts.get(w2);
-		double probw1 = wordCountw1 / totalWordCount;
-		double probw2 = wordCountw2 / totalWordCount;
-		double probw1w2 = coOccurrences / windows;
-		//System.out.println("probw2: " + coOccurrences);
+        double coOccurrences = coHash.get(w2);
+        double wordCountw1 = combinedWordCounts.get(w1);
+        double wordCountw2 = combinedWordCounts.get(w2);
+        double probw1 = wordCountw1 / totalWordCount;
+        double probw2 = wordCountw2 / totalWordCount;
+        if (probw2 == 0) System.out.println(w2);
+        double probw1w2 = coOccurrences / windows;
 		return Math.log(probw1w2 / (probw1 * probw2));
 	}
 
 	private static double emiScore(String w1, String w2) {
 		double coOccurrences = coHash.get(w2);
+		if (coOccurrences == 0) return 0;
 		return miScore(w1,w2) * coOccurrences / windows;
 	}
 
@@ -338,7 +355,7 @@ public class WordCluster {
 		//cluster name -> subcluster set
 		SortedMap<String, SortedSet<String>> subclusterMap = new TreeMap<String, SortedSet<String>>();
 
-		double threshold = 0.025;
+		double threshold = 0.05;
 
 		for (String stemmed : stem2WordsMap.keySet()) {
 			//a set of words with the same stem
