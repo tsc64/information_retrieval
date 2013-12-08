@@ -40,6 +40,7 @@ public class EvaluateQueries {
 		System.out.println();
 		System.out.println("Average P@5: " + evaluate(indexDir, docsDir, queryFile,
 				answerFile, numResults));
+		
 	}
 	
 	/**
