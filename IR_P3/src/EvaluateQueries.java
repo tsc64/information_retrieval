@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,11 +12,18 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.util.Version;
 import org.tartarus.snowball.ext.PorterStemmer;
 
+/**
+ * To return all the results as described, uncomment
+ * the various lines in preprocessQuery
+ *
+ */
 public class EvaluateQueries {
 	private static SortedMap<String, String> word2keyMap = null;
 	private static SortedMap<String, SortedSet<String>> key2wordsMap = null;
@@ -40,7 +48,7 @@ public class EvaluateQueries {
 		
 		System.out.println("\nProblem 1 Part 3b");
 		
-		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap);
+//		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap);
 //		word2keyMap = WordCluster.getWord2KeyMap(key2wordsMap);
 		
 		System.out.println();
@@ -57,13 +65,56 @@ public class EvaluateQueries {
 	 * 
 	 * @param query: original query extracted from cacm_processed.query file
 	 * @return a modified query
+	 * @throws IOException 
 	 */
-	private static String preprocessQuery(String query){
-		return stemQuery(query);
+	private static String preprocessQuery(String query) throws IOException{
+		//uncomment the code on the line below for the results in 4a)
+		//return query;
+		//uncomment the code on the line below for the results in 4b)
+		//return stemQuery(query);
+		//uncomment the code on the line below for the results in 4c)
+		return stemClassQuery(query);
+		//uncomment the code on the line below for the results in 4d)
 	}
 
-	private static String stemQuery (String query){
-		return query;
+	private static String stemQuery (String query) throws IOException{
+		String newQuery = "";
+		PorterStemmer stemmer = new PorterStemmer();
+		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
+		TokenStream stream = sa.tokenStream(null, new StringReader(query));
+		CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
+		stream.reset();
+		while (stream.incrementToken()){
+			String token = cattr.toString();
+			stemmer.setCurrent(token);
+			stemmer.stem();
+			String stemmed = stemmer.getCurrent() + " ";
+			newQuery += stemmed;
+		}
+		return newQuery;
+	}
+	
+	private static String stemClassQuery(String query) throws IOException{
+		String newQuery = "";
+		PorterStemmer stemmer = new PorterStemmer();
+		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
+		TokenStream stream = sa.tokenStream(null, new StringReader(query));
+		CharTermAttribute cattr = stream.addAttribute(CharTermAttribute.class);
+		stream.reset();
+		while (stream.incrementToken()){
+			String token = cattr.toString();
+			stemmer.setCurrent(token);
+			stemmer.stem();
+			String stemmed = stemmer.getCurrent();
+			SortedSet<String> wordSet = key2wordsMap.get(stemmed);
+			String newWords = "";
+			if (wordSet != null){
+			for (String x : wordSet){
+				newWords = newWords + x + " ";
+			}} else newWords = stemmed;
+			newQuery += newWords;
+		}
+		return newQuery;
 	}
 	
 	private static Map<Integer, String> loadQueries(String filename) {
