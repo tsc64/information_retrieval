@@ -37,9 +37,8 @@ public class EvaluateQueries {
 		System.out.println("\nProblem 1 Part 2");
 		WordCluster.problem1part2(key2wordsMap);
 		
-		System.out.println("\nProblem 1 Part 3b");
-		
-		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap);
+		WordCluster.sim = WordCluster.Similarity.DICE;
+		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
 //		word2keyMap = WordCluster.getWord2KeyMap(key2wordsMap);
 		
 		System.out.println();

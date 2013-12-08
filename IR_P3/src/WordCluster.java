@@ -35,12 +35,26 @@ public class WordCluster {
 	public static double windows;
 	public static ArrayList<String> computerList;
 	public static HashMap<String,Integer> coHash;
-
-	public static void main(String[] args) {
-		if (args.length == 0) {
-			args = new String[]{"computer"};
+	
+	public enum Similarity {
+		MI(0), EMI(0), CHI(0), DICE(0.05);
+		
+		double threshold;
+		Similarity(double threshold) {
+			this.threshold = threshold;
 		}
-		String mainWord = args[0];
+	}
+	public static Similarity sim;
+	
+	public static void main(String[] args) {
+		setUpForSimilarity("computer");
+		miIterator();
+		sim = Similarity.DICE;
+		SortedMap<String, SortedSet<String>> key2wordsMap = getStem2WordsMap("data/txt/");
+		subclusterStem2WordsMap(key2wordsMap, true);
+	}
+	
+	public static void setUpForSimilarity(String mainWord) {
 		totalWordCount = 0;
 		windows = 0;
 
@@ -75,9 +89,6 @@ public class WordCluster {
 //		System.out.println(combinedWordCounts.get("computer"));
 		totalWordCount = totalWords(allTheWords);
 		coHash.put(mainWord, 0);
-		if (mainWord.equals("computer")) {
-			miIterator();
-		}
 	}
 
 
@@ -335,12 +346,18 @@ public class WordCluster {
 	}
 
 	private static double computeSimilarity(String w1, String w2) {
-		WordCluster.main(new String[]{w1});
+		setUpForSimilarity(w1);
 
-		//		return miScore(w1, w2);
-		//		return emiScore(w1, w2);
-		//		return chiSquaredScore(w1, w2);
-		return diceScore(w1, w2);
+		switch (sim) {
+		case MI:
+			return miScore(w1, w2);
+		case EMI:
+			return emiScore(w1, w2);
+		case CHI:
+			return chiSquaredScore(w1, w2);
+		default:
+			return diceScore(w1, w2);
+		}
 	}
 
 	/**
@@ -350,12 +367,9 @@ public class WordCluster {
 	 * can be something arbitrary (e.g. stem + number, such as "polic1", "polic2")
 	 * 
 	 */
-	public static SortedMap<String, SortedSet<String>> subclusterStem2WordsMap(SortedMap<String, SortedSet<String>> stem2WordsMap){
-		boolean calculateOnlyTop10 = true;
+	public static SortedMap<String, SortedSet<String>> subclusterStem2WordsMap(SortedMap<String, SortedSet<String>> stem2WordsMap, boolean calculateOnlyTop10){
 		//cluster name -> subcluster set
 		SortedMap<String, SortedSet<String>> subclusterMap = new TreeMap<String, SortedSet<String>>();
-
-		double threshold = 0.05;
 
 		for (String stemmed : stem2WordsMap.keySet()) {
 			//a set of words with the same stem
@@ -370,8 +384,7 @@ public class WordCluster {
 				for (int j = i + 1; j < wordsArr.length; j++) {
 					String word1 = (String) wordsArr[i];
 					String word2 = (String) wordsArr[j];
-//			for (String word1 : wordsSet) {
-//				for (String word2 : wordsSet) {
+					
 					if (!wordToOutNodes.containsKey(word1)) {
 						wordToOutNodes.put(word1, new HashSet<String>());
 					}
@@ -381,8 +394,7 @@ public class WordCluster {
 
 					if (!word1.equals(word2)) {
 						double similarity = computeSimilarity(word1, word2);
-						//					System.out.print (similarity + " ");
-						if (similarity >= threshold) {
+						if (similarity >= sim.threshold) {
 							HashSet<String> s1 = wordToOutNodes.get(word1);
 							HashSet<String> s2 = wordToOutNodes.get(word2);
 							s1.add(word2);
@@ -391,7 +403,6 @@ public class WordCluster {
 					}
 				}
 			}
-			//			System.out.println();
 			LinkedList<HashSet<String>> subclusterList = new LinkedList<HashSet<String>>();
 			for (String word : wordToOutNodes.keySet()) {
 				boolean wordInACluster = false;
