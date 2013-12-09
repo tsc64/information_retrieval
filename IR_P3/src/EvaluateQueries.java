@@ -69,14 +69,7 @@ public class EvaluateQueries {
 	 */
 	private static String preprocessQuery(String query) throws IOException{
 		//uncomment the code on the line below for the results in 4a)
-		//return query;
-		String[] words = query.split(" ");
-		
-		String q = "";
-		for (int i = 0; i < words.length; i++) {
-			q += words[(i+5) % words.length] + " ";
-		}
-		return q.trim();
+		return query;
 
 		//uncomment the code on the line below for the results in 4b)
 		//return stemQuery(query);
