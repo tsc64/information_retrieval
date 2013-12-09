@@ -1,6 +1,10 @@
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,46 +36,49 @@ public class WordCluster {
 	public static HashMap<Tuple,Integer> allTheWords;
 	public static HashMap<String,Integer> combinedWordCounts;
 	public static int totalWordCount;
-	public static double windows;
+	public static double windows = 0;
 	public static ArrayList<String> computerList;
 	public static HashMap<String,Integer> coHash;
-	
+
 	public enum Similarity {
-		MI(1000), EMI(0), CHI(0), DICE(0.05);
-		
+		MI(10.5), EMI(0.005), CHI(2500), DICE(0.05);
+
 		double threshold;
 		Similarity(double threshold) {
 			this.threshold = threshold;
 		}
 	}
 	public static Similarity sim;
-	
+
 	public static void main(String[] args) {
+		System.out.println("Problem 1 Part 3");
+		System.out.println("a)");
 		setUpForSimilarity("computer");
-//		miIterator();
-		sim = Similarity.MI;
+		miIterator();
+		
+		System.out.println("\nb)");
+		sim = Similarity.DICE;
 		SortedMap<String, SortedSet<String>> key2wordsMap = getStem2WordsMap("data/txt/");
 		subclusterStem2WordsMap(key2wordsMap, true);
 	}
-	
+
 	public static void setUpForSimilarity(String mainWord) {
 		totalWordCount = 0;
-		windows = 0;
 
 		if (allTheWords == null) {
 			allTheWords = new HashMap<Tuple,Integer>();
 			allTheWords = wordCounter();
 		}
-		
-//		System.out.println(windows);
+
+		//		System.out.println(windows);
 		computerList = new ArrayList<String>();
 		for (Tuple t : allTheWords.keySet()){
 			if (t.word.equals(mainWord)){
 				computerList.add(t.inFile);
 			}
 		}
-		
-//		System.out.println(computerList);
+
+		//		System.out.println(computerList);
 		coHash = new HashMap<String,Integer>();
 		for (Tuple t : allTheWords.keySet()){
 			if (!(coHash.containsKey(t.word))){
@@ -81,12 +88,12 @@ public class WordCluster {
 				coHash.put(t.word, coHash.get(t.word)+1);
 			}
 		}
-		
+
 		if (combinedWordCounts == null) {
 			combinedWordCounts = new HashMap<String,Integer>();
 			combinedWordCounts = countOfWord(allTheWords);
 		}
-//		System.out.println(combinedWordCounts.get("computer"));
+		//		System.out.println(combinedWordCounts.get("computer"));
 		totalWordCount = totalWords(allTheWords);
 		coHash.put(mainWord, 0);
 	}
@@ -198,7 +205,7 @@ public class WordCluster {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-//		System.out.println("done with main word count");
+		//		System.out.println("done with main word count");
 		return occurences;
 	}
 
@@ -250,12 +257,12 @@ public class WordCluster {
 		HashMap<String,Double> wordAndDice = new HashMap<String,Double>();
 		for (String t : combinedWordCounts.keySet()){
 			if (s != t){
-			wordAndMIVal.put(t, miScore(s,t));
-			wordAndEMIVal.put(t, emiScore(s,t));
-			wordAndChiVal.put(t,chiSquaredScore(s,t));
-			wordAndDice.put(t, diceScore(s,t));}
+				wordAndMIVal.put(t, miScore(s,t));
+				wordAndEMIVal.put(t, emiScore(s,t));
+				wordAndChiVal.put(t,chiSquaredScore(s,t));
+				wordAndDice.put(t, diceScore(s,t));}
 		}
-//		System.out.println("done computing association values");
+		//		System.out.println("done computing association values");
 		//find 10 max values
 		PriorityQueue<Tuple> highQmi = new PriorityQueue<Tuple>();
 		PriorityQueue<Tuple> highQemi = new PriorityQueue<Tuple>();
@@ -313,13 +320,13 @@ public class WordCluster {
 	}
 
 	private static double miScore(String w1, String w2) {
-        double coOccurrences = coHash.get(w2);
-        double wordCountw1 = combinedWordCounts.get(w1);
-        double wordCountw2 = combinedWordCounts.get(w2);
-        double probw1 = wordCountw1 / totalWordCount;
-        double probw2 = wordCountw2 / totalWordCount;
-        if (probw2 == 0) System.out.println(w2);
-        double probw1w2 = coOccurrences / windows;
+		double coOccurrences = coHash.get(w2);
+		double wordCountw1 = combinedWordCounts.get(w1);
+		double wordCountw2 = combinedWordCounts.get(w2);
+		double probw1 = wordCountw1 / totalWordCount;
+		double probw2 = wordCountw2 / totalWordCount;
+		if (probw2 == 0) System.out.println(w2);
+		double probw1w2 = coOccurrences / windows;
 		return Math.log(probw1w2 / (probw1 * probw2));
 	}
 
@@ -380,11 +387,12 @@ public class WordCluster {
 			}
 			HashMap<String, HashSet<String>> wordToOutNodes = new HashMap<String, HashSet<String>>();
 			Object[] wordsArr = wordsSet.toArray();
+			//note- does not process words with a wordsSet of size 0
 			for (int i = 0; i < wordsArr.length; i++) {
 				for (int j = i + 1; j < wordsArr.length; j++) {
 					String word1 = (String) wordsArr[i];
 					String word2 = (String) wordsArr[j];
-					
+
 					if (!wordToOutNodes.containsKey(word1)) {
 						wordToOutNodes.put(word1, new HashSet<String>());
 					}
@@ -394,7 +402,7 @@ public class WordCluster {
 
 					if (!word1.equals(word2)) {
 						double similarity = computeSimilarity(word1, word2);
-						System.out.println(similarity);
+						//						System.out.println(similarity);
 						if (similarity >= sim.threshold) {
 							HashSet<String> s1 = wordToOutNodes.get(word1);
 							HashSet<String> s2 = wordToOutNodes.get(word2);
@@ -420,9 +428,9 @@ public class WordCluster {
 					subclusterList.add(newCluster);
 				}
 			}
+			//Turn subclusters into SortedSets
 			for (int i = 0; i < subclusterList.size(); i++) {
 				HashSet<String> subcluster = subclusterList.get(i);
-				//Turn subcluster into SortedSet
 				TreeSet<String> sub = new TreeSet<String>();//(TreeSet<String>) subcluster;
 				for (String str : subcluster) {
 					sub.add(str);
@@ -440,6 +448,75 @@ public class WordCluster {
 		}
 
 		return subclusterMap;
+	}
+	
+	public static SortedMap<String, SortedSet<String>> MIsubclusterStem2WordsMap;
+	public static SortedMap<String, SortedSet<String>> EMIsubclusterStem2WordsMap;
+	public static SortedMap<String, SortedSet<String>> CHIsubclusterStem2WordsMap;
+	public static SortedMap<String, SortedSet<String>> DICEsubclusterStem2WordsMap;
+	
+	public static void serializeAndLoadMaps(SortedMap<String, SortedSet<String>> key2wordsMap) {
+		String[] filenames = new String[] {"miSubclusters.ser", "emiSubclusters.ser", "chiSubclusters.ser", "diceSubclusters.ser"};
+		
+		//Serialize maps
+		for (int i = 0; i < filenames.length; i++) {
+			String filename = filenames[i];
+			File file = new File(filename);
+			SortedMap<String, SortedSet<String>> subclusterStem2WordsMap = null;
+			
+			if (!file.exists()) {
+				switch (i) {
+				case 0:
+					WordCluster.sim = WordCluster.Similarity.MI;
+					break;
+				case 1:
+					WordCluster.sim = WordCluster.Similarity.EMI;
+					break;
+				case 2:
+					WordCluster.sim = WordCluster.Similarity.CHI;
+					break;
+				default:
+					WordCluster.sim = WordCluster.Similarity.DICE;
+					break;
+				}
+				subclusterStem2WordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
+				
+				try {
+					FileOutputStream fileOut = new FileOutputStream(filename);
+					ObjectOutputStream out = new ObjectOutputStream(fileOut);
+					out.writeObject(subclusterStem2WordsMap);
+					out.close();
+					fileOut.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				try {
+					FileInputStream fileIn = new FileInputStream(filename);
+					ObjectInputStream in = new ObjectInputStream(fileIn);
+					subclusterStem2WordsMap = (SortedMap<String, SortedSet<String>>) in.readObject();
+					in.close();
+					fileIn.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
+			switch (i) {
+			case 0:
+				MIsubclusterStem2WordsMap = subclusterStem2WordsMap;
+				break;
+			case 1:
+				EMIsubclusterStem2WordsMap = subclusterStem2WordsMap;
+				break;
+			case 2:
+				CHIsubclusterStem2WordsMap = subclusterStem2WordsMap;
+				break;
+			default:
+				DICEsubclusterStem2WordsMap = subclusterStem2WordsMap;
+				break;
+			}
+		}
 	}
 
 	private static void fillSubcluster(String word, final HashSet<String> subcluster, final HashMap<String, HashSet<String>> wordToOutNodes) {

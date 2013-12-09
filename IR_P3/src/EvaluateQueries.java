@@ -4,13 +4,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -30,7 +30,7 @@ public class EvaluateQueries {
 	private static final CharArraySet STOPWORDS = StandardAnalyzer.STOP_WORDS_SET;
 	private static final Version VERSION = Version.LUCENE_44;
 	private static final String DATA_DIR = "data/";
-	
+
 	public static void main(String[] args) {
 		String docsDir = DATA_DIR + "txt"; // directory containing documents
 		String indexDir = DATA_DIR + "index"; // the directory where index is written into
@@ -42,20 +42,21 @@ public class EvaluateQueries {
 		key2wordsMap = WordCluster.getStem2WordsMap(docsDir);
 		System.out.println("Problem 1 Part 1");
 		WordCluster.problem1part1(key2wordsMap);
-		
+
 		System.out.println("\nProblem 1 Part 2");
 		WordCluster.problem1part2(key2wordsMap);
 
-		WordCluster.sim = WordCluster.Similarity.DICE;
-		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
-//		word2keyMap = WordCluster.getWord2KeyMap(key2wordsMap);
-		
-		System.out.println();
+		//key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
+		//word2keyMap = WordCluster.getWord2KeyMap(key2wordsMap);
+
+		System.out.println("\nProblem 1 Part 4");
+		WordCluster.serializeAndLoadMaps(key2wordsMap);
+
 		System.out.println("Average P@5: " + evaluate(indexDir, docsDir, queryFile,
 				answerFile, numResults));
-		
+
 	}
-	
+
 	/**
 	 * Once you finish implementing WordCluster class, you can use 
 	 * "key2wordsMap" and "word2keyMap" to transform the query.
@@ -69,11 +70,25 @@ public class EvaluateQueries {
 	private static String preprocessQuery(String query) throws IOException{
 		//uncomment the code on the line below for the results in 4a)
 		//return query;
+		String[] words = query.split(" ");
+		
+		String q = "";
+		for (int i = 0; i < words.length; i++) {
+			q += words[(i+5) % words.length] + " ";
+		}
+		return q.trim();
+
 		//uncomment the code on the line below for the results in 4b)
 		//return stemQuery(query);
+
 		//uncomment the code on the line below for the results in 4c)
-		return stemClassQuery(query);
+		//return stemClassQuery(query);
+
 		//uncomment the code on the line below for the results in 4d)
+		//return stemSubclassQuery(query, WordCluster.MIsubclusterStem2WordsMap);
+		//return stemSubclassQuery(query, WordCluster.EMIsubclusterStem2WordsMap);
+		//return stemSubclassQuery(query, WordCluster.CHIsubclusterStem2WordsMap);
+		//return stemSubclassQuery(query, WordCluster.DICEsubclusterStem2WordsMap);
 	}
 
 	private static String stemQuery(String query) throws IOException{
@@ -92,9 +107,9 @@ public class EvaluateQueries {
 		}
 		return newQuery;
 	}
-	
+
 	private static String stemClassQuery(String query) throws IOException{
-		String newQuery = "";
+		String newQuery = query;
 		PorterStemmer stemmer = new PorterStemmer();
 		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
 		TokenStream stream = sa.tokenStream(null, new StringReader(query));
@@ -108,23 +123,26 @@ public class EvaluateQueries {
 			SortedSet<String> wordSet = key2wordsMap.get(stemmed);
 			String newWords = "";
 			if (wordSet != null){
-			for (String x : wordSet){
-				newWords = newWords + x + " ";
-			}} else newWords = stemmed;
+				String[] words = newQuery.split(" ");
+				for (String x : wordSet){
+					boolean toAdd = true;
+					for (String word : words) {
+						if (word.equals(x)) {
+							toAdd = false;
+							break;
+						}
+					}
+					if (toAdd) {
+						newWords = newWords + x + " ";
+					}
+				}} else newWords = token;
 			newQuery += newWords;
 		}
 		return newQuery;
 	}
-	
-	private static String stemSubclassQuery(String query) throws IOException {
-		File miFile = new File("miSubclusters");
-		File emiFile = new File("emiSubclusters");
-		File chiFile = new File("chiSubclusters");
-		File diceFile = new File("diceSubclusters");
-		WordCluster.sim = WordCluster.Similarity.DICE;
-		key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
-		
-		String newQuery = "";
+
+	private static String stemSubclassQuery(String query, SortedMap<String, SortedSet<String>> subclusterStem2WordsMap) throws IOException {
+		String newQuery = query;
 		PorterStemmer stemmer = new PorterStemmer();
 		StandardAnalyzer sa = new StandardAnalyzer(Version.LUCENE_44);
 		TokenStream stream = sa.tokenStream(null, new StringReader(query));
@@ -136,17 +154,45 @@ public class EvaluateQueries {
 			stemmer.stem();
 			String stemmed = stemmer.getCurrent();
 
-			WordCluster.sim = WordCluster.Similarity.DICE;
-			key2wordsMap = WordCluster.subclusterStem2WordsMap(key2wordsMap, false);
-			
 			String newWords = "";
-
+			SortedSet<String> set = null;
+			if (!key2wordsMap.containsKey(stemmed) || (key2wordsMap.containsKey(stemmed) && key2wordsMap.get(stemmed).size() == 1)) {
+				set = new TreeSet<String>();
+				set.add(token);
+			} else {
+				for (int i = 0; i < Integer.MAX_VALUE; i++) {
+					String key = stemmed + i;
+					if (subclusterStem2WordsMap.containsKey(key)) {
+						set = subclusterStem2WordsMap.get(key);
+						if (set.contains(token)) {
+							break;
+						}
+					} else if (i > 0 && subclusterStem2WordsMap.containsKey(stemmed + (i-1))) {
+						set = new TreeSet<String>();
+						set.add(token);
+						break;
+					}
+				}
+			}
+			for (String word : set) {
+				String[] queryWords = newQuery.split(" ");
+				boolean toAdd = true;
+				for (String queryWord : queryWords) {
+					if (queryWord.equals(word)) {
+						toAdd = false;
+						break;
+					}
+				}
+				if (toAdd) {
+					newWords += word + " ";
+				}
+			}
 			newQuery += newWords;
 		}
 		sa.close();
-		return newQuery;
+		return newQuery.trim();
 	}
-	
+
 	private static Map<Integer, String> loadQueries(String filename) {
 		Map<Integer, String> queryIdMap = new HashMap<Integer, String>();
 		BufferedReader in = null;
